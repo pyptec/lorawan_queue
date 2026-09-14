@@ -5,6 +5,7 @@ import sqlite3
 import hashlib
 import threading
 import time
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,8 +22,9 @@ TTN_PORT = 1700
 
 DB_PATH = "/home/pi/lorawan_queue/lorawan_queue.db"
 
+ACK_TIMEOUT = 2.0
 RETRY_INTERVAL = 5
-SOCKET_TIMEOUT = 1.0
+QUEUE_BATCH_SIZE = 10
 
 
 # ============================================================
@@ -30,24 +32,23 @@ SOCKET_TIMEOUT = 1.0
 # ============================================================
 
 PUSH_DATA = 0x00
-PUSH_ACK  = 0x01
+PUSH_ACK = 0x01
 PULL_DATA = 0x02
 PULL_RESP = 0x03
-PULL_ACK  = 0x04
-TX_ACK    = 0x05
+PULL_ACK = 0x04
+TX_ACK = 0x05
 
 
 # ============================================================
 # VARIABLES
 # ============================================================
 
-last_push_client = None
+running = True
+
 last_pull_client = None
 
 client_lock = threading.Lock()
 db_lock = threading.Lock()
-
-running = True
 
 
 # ============================================================
@@ -59,21 +60,19 @@ def utc_now():
 
 
 def packet_type_name(packet_type):
-
     names = {
         PUSH_DATA: "PUSH_DATA",
-        PUSH_ACK:  "PUSH_ACK",
+        PUSH_ACK: "PUSH_ACK",
         PULL_DATA: "PULL_DATA",
         PULL_RESP: "PULL_RESP",
-        PULL_ACK:  "PULL_ACK",
-        TX_ACK:    "TX_ACK",
+        PULL_ACK: "PULL_ACK",
+        TX_ACK: "TX_ACK",
     }
 
     return names.get(packet_type, f"UNKNOWN_{packet_type}")
 
 
 def parse_semtech_packet(data):
-
     if len(data) < 4:
         return None
 
@@ -84,7 +83,6 @@ def parse_semtech_packet(data):
     gateway_eui = None
 
     if packet_type in (PUSH_DATA, PULL_DATA, TX_ACK):
-
         if len(data) >= 12:
             gateway_eui = data[4:12].hex().upper()
 
@@ -96,42 +94,72 @@ def parse_semtech_packet(data):
     }
 
 
+def parse_push_json(data):
+    if len(data) <= 12:
+        return {}
+
+    try:
+        payload = data[12:].decode("utf-8")
+        return json.loads(payload)
+
+    except Exception:
+        return {}
+
+
+def contains_rxpk(data):
+    obj = parse_push_json(data)
+
+    rxpk = obj.get("rxpk")
+
+    return isinstance(rxpk, list) and len(rxpk) > 0
+
+
+def contains_stat(data):
+    obj = parse_push_json(data)
+
+    return "stat" in obj
+
+
 # ============================================================
 # BASE DE DATOS
 # ============================================================
 
 def init_db():
-
-    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    Path(DB_PATH).parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
 
     conn = sqlite3.connect(DB_PATH)
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS uplink_queue (
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             received_at TEXT NOT NULL,
-
             gateway_eui TEXT,
-
             token TEXT,
-
             packet_hash TEXT NOT NULL UNIQUE,
-
             raw_packet BLOB NOT NULL,
-
             status TEXT NOT NULL DEFAULT 'pending',
-
             attempts INTEGER NOT NULL DEFAULT 0,
-
             last_attempt TEXT,
-
             sent_at TEXT,
-
+            ack_at TEXT,
             created_at TEXT NOT NULL
         )
     """)
+
+    columns = [
+        row[1]
+        for row in conn.execute(
+            "PRAGMA table_info(uplink_queue)"
+        ).fetchall()
+    ]
+
+    if "ack_at" not in columns:
+        conn.execute(
+            "ALTER TABLE uplink_queue ADD COLUMN ack_at TEXT"
+        )
 
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_uplink_status
@@ -143,18 +171,15 @@ def init_db():
 
 
 def save_packet(data, info):
-
     packet_hash = hashlib.sha256(data).hexdigest()
 
     now = utc_now()
 
     with db_lock:
-
         conn = sqlite3.connect(DB_PATH)
 
         try:
-
-            conn.execute("""
+            cursor = conn.execute("""
                 INSERT INTO uplink_queue (
                     received_at,
                     gateway_eui,
@@ -169,7 +194,7 @@ def save_packet(data, info):
             """, (
                 now,
                 info.get("gateway_eui"),
-                info["token"].hex(),
+                info["token"].hex().upper(),
                 packet_hash,
                 sqlite3.Binary(data),
                 now
@@ -177,31 +202,25 @@ def save_packet(data, info):
 
             conn.commit()
 
-            packet_id = conn.execute(
-                "SELECT last_insert_rowid()"
-            ).fetchone()[0]
-
-            return packet_id, True
+            return cursor.lastrowid, True
 
         except sqlite3.IntegrityError:
-
             return None, False
 
         finally:
             conn.close()
 
 
-def get_pending_packets(limit=20):
-
+def get_pending_packets(limit=10):
     with db_lock:
-
         conn = sqlite3.connect(DB_PATH)
 
         rows = conn.execute("""
             SELECT
                 id,
                 raw_packet,
-                attempts
+                attempts,
+                received_at
             FROM uplink_queue
             WHERE status = 'pending'
             ORDER BY id ASC
@@ -214,9 +233,7 @@ def get_pending_packets(limit=20):
 
 
 def mark_attempt(packet_id):
-
     with db_lock:
-
         conn = sqlite3.connect(DB_PATH)
 
         conn.execute("""
@@ -234,18 +251,20 @@ def mark_attempt(packet_id):
 
 
 def mark_sent(packet_id):
+    now = utc_now()
 
     with db_lock:
-
         conn = sqlite3.connect(DB_PATH)
 
         conn.execute("""
             UPDATE uplink_queue
             SET status = 'sent',
-                sent_at = ?
+                sent_at = ?,
+                ack_at = ?
             WHERE id = ?
         """, (
-            utc_now(),
+            now,
+            now,
             packet_id
         ))
 
@@ -254,9 +273,7 @@ def mark_sent(packet_id):
 
 
 def get_statistics():
-
     with db_lock:
-
         conn = sqlite3.connect(DB_PATH)
 
         pending = conn.execute("""
@@ -282,11 +299,10 @@ def get_statistics():
 
 
 # ============================================================
-# ACK LOCAL PARA PUSH_DATA
+# ACK LOCAL
 # ============================================================
 
 def build_push_ack(data):
-
     if len(data) < 4:
         return None
 
@@ -317,17 +333,82 @@ local_socket.bind(
 
 
 # ============================================================
-# SOCKET HACIA TTN
+# SOCKET DOWNSTREAM TTN
 # ============================================================
 
-ttn_socket = socket.socket(
+down_socket = socket.socket(
     socket.AF_INET,
     socket.SOCK_DGRAM
 )
 
-ttn_socket.settimeout(
-    SOCKET_TIMEOUT
+down_socket.settimeout(1.0)
+
+
+# ============================================================
+# SOCKET UPSTREAM / COLA
+# ============================================================
+
+up_socket = socket.socket(
+    socket.AF_INET,
+    socket.SOCK_DGRAM
 )
+
+up_socket.settimeout(
+    ACK_TIMEOUT
+)
+
+
+# ============================================================
+# ENVIO PUSH CON ACK REAL TTN
+# ============================================================
+
+def send_push_and_wait_ack(data):
+    info = parse_semtech_packet(data)
+
+    if not info:
+        return False
+
+    expected_token = info["token"]
+
+    try:
+        up_socket.sendto(
+            data,
+            (TTN_HOST, TTN_PORT)
+        )
+
+        deadline = time.time() + ACK_TIMEOUT
+
+        while time.time() < deadline:
+            try:
+                response, remote = up_socket.recvfrom(
+                    65535
+                )
+
+            except socket.timeout:
+                return False
+
+            response_info = parse_semtech_packet(
+                response
+            )
+
+            if not response_info:
+                continue
+
+            if (
+                response_info["type"] == PUSH_ACK
+                and
+                response_info["token"] == expected_token
+            ):
+                return True
+
+        return False
+
+    except Exception as e:
+        print(
+            f"[WARN] Error enviando PUSH_DATA: {e}"
+        )
+
+        return False
 
 
 # ============================================================
@@ -335,8 +416,6 @@ ttn_socket.settimeout(
 # ============================================================
 
 def local_receiver():
-
-    global last_push_client
     global last_pull_client
 
     print(
@@ -345,124 +424,8 @@ def local_receiver():
     )
 
     while running:
-
         try:
-
-            data, addr = local_socket.recvfrom(65535)
-
-            info = parse_semtech_packet(data)
-
-            if not info:
-                continue
-
-            packet_type = info["type"]
-
-            # --------------------------------------------
-            # PUSH_DATA
-            # --------------------------------------------
-
-            if packet_type == PUSH_DATA:
-
-                with client_lock:
-                    last_push_client = addr
-
-                packet_id, inserted = save_packet(
-                    data,
-                    info
-                )
-
-                # ACK inmediato SOLO despues de guardar
-                ack = build_push_ack(data)
-
-                if ack:
-                    local_socket.sendto(
-                        ack,
-                        addr
-                    )
-
-                if inserted:
-
-                    print(
-                        f"[RX] PUSH_DATA "
-                        f"id={packet_id} "
-                        f"GW={info['gateway_eui']} "
-                        f"guardado"
-                    )
-
-                else:
-
-                    print(
-                        "[RX] PUSH_DATA duplicado"
-                    )
-
-            # --------------------------------------------
-            # PULL_DATA
-            # --------------------------------------------
-
-            elif packet_type == PULL_DATA:
-
-                with client_lock:
-                    last_pull_client = addr
-
-                try:
-
-                    ttn_socket.sendto(
-                        data,
-                        (TTN_HOST, TTN_PORT)
-                    )
-
-                except Exception as e:
-
-                    print(
-                        f"[WARN] PULL_DATA TTN: {e}"
-                    )
-
-            # --------------------------------------------
-            # TX_ACK
-            # --------------------------------------------
-
-            elif packet_type == TX_ACK:
-
-                try:
-
-                    ttn_socket.sendto(
-                        data,
-                        (TTN_HOST, TTN_PORT)
-                    )
-
-                except Exception as e:
-
-                    print(
-                        f"[WARN] TX_ACK TTN: {e}"
-                    )
-
-            else:
-
-                print(
-                    f"[LOCAL] "
-                    f"{packet_type_name(packet_type)}"
-                )
-
-        except Exception as e:
-
-            print(
-                f"[ERROR] local_receiver: {e}"
-            )
-
-            time.sleep(1)
-
-
-# ============================================================
-# RECEPCION TTN
-# ============================================================
-
-def ttn_receiver():
-
-    while running:
-
-        try:
-
-            data, remote = ttn_socket.recvfrom(
+            data, addr = local_socket.recvfrom(
                 65535
             )
 
@@ -473,9 +436,158 @@ def ttn_receiver():
 
             packet_type = info["type"]
 
-            # --------------------------------------------
-            # PULL_ACK
-            # --------------------------------------------
+            # ==================================================
+            # PUSH_DATA
+            # ==================================================
+
+            if packet_type == PUSH_DATA:
+
+                has_rxpk = contains_rxpk(data)
+                has_stat = contains_stat(data)
+
+                # UPLINK RF REAL
+                if has_rxpk:
+
+                    packet_id, inserted = save_packet(
+                        data,
+                        info
+                    )
+
+                    ack = build_push_ack(data)
+
+                    if ack:
+                        local_socket.sendto(
+                            ack,
+                            addr
+                        )
+
+                    if inserted:
+                        print(
+                            f"[RX] id={packet_id} "
+                            f"GW={info['gateway_eui']} "
+                            f"token={info['token'].hex().upper()} "
+                            f"guardado"
+                        )
+
+                    else:
+                        print(
+                            f"[RX] duplicado "
+                            f"token={info['token'].hex().upper()}"
+                        )
+
+                # SOLO ESTADISTICAS
+                elif has_stat:
+
+                    ack = build_push_ack(data)
+
+                    if ack:
+                        local_socket.sendto(
+                            ack,
+                            addr
+                        )
+
+                    ok = send_push_and_wait_ack(data)
+
+                    if ok:
+                        print(
+                            "[STAT] enviado a TTN"
+                        )
+
+                    else:
+                        print(
+                            "[STAT] TTN sin respuesta"
+                        )
+
+                # PUSH_DATA NO IDENTIFICADO
+                else:
+
+                    packet_id, inserted = save_packet(
+                        data,
+                        info
+                    )
+
+                    ack = build_push_ack(data)
+
+                    if ack:
+                        local_socket.sendto(
+                            ack,
+                            addr
+                        )
+
+                    print(
+                        f"[RX] PUSH_DATA genérico "
+                        f"id={packet_id}"
+                    )
+
+            # ==================================================
+            # PULL_DATA
+            # ==================================================
+
+            elif packet_type == PULL_DATA:
+
+                with client_lock:
+                    last_pull_client = addr
+
+                try:
+                    down_socket.sendto(
+                        data,
+                        (TTN_HOST, TTN_PORT)
+                    )
+
+                except Exception as e:
+                    print(
+                        f"[WARN] PULL_DATA: {e}"
+                    )
+
+            # ==================================================
+            # TX_ACK
+            # ==================================================
+
+            elif packet_type == TX_ACK:
+
+                try:
+                    down_socket.sendto(
+                        data,
+                        (TTN_HOST, TTN_PORT)
+                    )
+
+                except Exception as e:
+                    print(
+                        f"[WARN] TX_ACK: {e}"
+                    )
+
+            else:
+                print(
+                    f"[LOCAL] "
+                    f"{packet_type_name(packet_type)}"
+                )
+
+        except Exception as e:
+            print(
+                f"[ERROR] local_receiver: {e}"
+            )
+
+            time.sleep(1)
+
+
+# ============================================================
+# RECEPCION DOWNSTREAM TTN
+# ============================================================
+
+def downstream_receiver():
+
+    while running:
+        try:
+            data, remote = down_socket.recvfrom(
+                65535
+            )
+
+            info = parse_semtech_packet(data)
+
+            if not info:
+                continue
+
+            packet_type = info["type"]
 
             if packet_type == PULL_ACK:
 
@@ -483,15 +595,10 @@ def ttn_receiver():
                     target = last_pull_client
 
                 if target:
-
                     local_socket.sendto(
                         data,
                         target
                     )
-
-            # --------------------------------------------
-            # PULL_RESP
-            # --------------------------------------------
 
             elif packet_type == PULL_RESP:
 
@@ -499,92 +606,80 @@ def ttn_receiver():
                     target = last_pull_client
 
                 if target:
-
                     local_socket.sendto(
                         data,
                         target
                     )
 
                     print(
-                        "[DOWNLINK] PULL_RESP recibido"
+                        "[DOWNLINK] PULL_RESP TTN -> RAK"
                     )
-
-            # PUSH_ACK remoto no se retransmite.
-            # El packet forwarder ya recibio nuestro
-            # PUSH_ACK local.
 
         except socket.timeout:
             pass
 
         except Exception as e:
-
             print(
-                f"[ERROR] ttn_receiver: {e}"
+                f"[ERROR] downstream_receiver: {e}"
             )
 
             time.sleep(1)
 
 
 # ============================================================
-# ENVIO DE COLA
+# WORKER COLA
 # ============================================================
 
 def queue_worker():
 
-    print("[INFO] Worker de cola iniciado")
+    print(
+        "[INFO] Worker de cola iniciado"
+    )
 
     while running:
-
         try:
-
             packets = get_pending_packets(
-                limit=10
+                limit=QUEUE_BATCH_SIZE
             )
 
             if not packets:
-
                 time.sleep(RETRY_INTERVAL)
                 continue
 
-            for packet_id, raw_packet, attempts in packets:
+            for packet_id, raw_packet, attempts, received_at in packets:
 
-                try:
+                mark_attempt(packet_id)
 
-                    mark_attempt(packet_id)
+                print(
+                    f"[QUEUE] enviando id={packet_id} "
+                    f"intento={attempts + 1}"
+                )
 
-                    ttn_socket.sendto(
-                        raw_packet,
-                        (TTN_HOST, TTN_PORT)
-                    )
+                ack_ok = send_push_and_wait_ack(
+                    raw_packet
+                )
 
-                    # Primera version:
-                    # marcamos como enviado tras sendto().
-                    #
-                    # En la siguiente etapa vincularemos
-                    # PUSH_ACK remoto al token y solo entonces
-                    # cambiaremos a SENT.
-
+                if ack_ok:
                     mark_sent(packet_id)
 
                     print(
-                        f"[TX] id={packet_id} "
-                        f"enviado a TTN"
+                        f"[ACK] id={packet_id} "
+                        f"confirmado por TTN"
                     )
 
-                    time.sleep(0.05)
-
-                except Exception as e:
-
+                else:
                     print(
-                        f"[QUEUE] TTN no disponible: {e}"
+                        f"[PENDING] id={packet_id} "
+                        f"sin PUSH_ACK"
                     )
 
                     break
 
+                time.sleep(0.10)
+
             time.sleep(1)
 
         except Exception as e:
-
             print(
                 f"[ERROR] queue_worker: {e}"
             )
@@ -599,9 +694,7 @@ def queue_worker():
 def statistics_worker():
 
     while running:
-
         try:
-
             total, pending, sent = get_statistics()
 
             print(
@@ -611,7 +704,6 @@ def statistics_worker():
             )
 
         except Exception as e:
-
             print(
                 f"[ERROR] statistics: {e}"
             )
@@ -627,24 +719,36 @@ def main():
 
     print("")
     print("========================================")
-    print(" SAMEE LoRaWAN Store & Forward")
+    print(" SAMEE LoRaWAN Store & Forward V2")
     print("========================================")
-    print(f"Gateway local : {LOCAL_IP}:{LOCAL_PORT}")
-    print(f"TTN            : {TTN_HOST}:{TTN_PORT}")
-    print(f"DB             : {DB_PATH}")
+    print(
+        f"Gateway local : "
+        f"{LOCAL_IP}:{LOCAL_PORT}"
+    )
+    print(
+        f"TTN           : "
+        f"{TTN_HOST}:{TTN_PORT}"
+    )
+    print(
+        f"DB            : "
+        f"{DB_PATH}"
+    )
+    print(
+        f"ACK timeout   : "
+        f"{ACK_TIMEOUT} s"
+    )
     print("")
 
     init_db()
 
     threads = [
-
         threading.Thread(
             target=local_receiver,
             daemon=True
         ),
 
         threading.Thread(
-            target=ttn_receiver,
+            target=downstream_receiver,
             daemon=True
         ),
 
@@ -663,12 +767,10 @@ def main():
         thread.start()
 
     try:
-
         while True:
             time.sleep(10)
 
     except KeyboardInterrupt:
-
         print("")
         print("[INFO] Deteniendo...")
         print("")
