@@ -49,6 +49,7 @@ last_pull_client = None
 
 client_lock = threading.Lock()
 db_lock = threading.Lock()
+push_lock = threading.Lock()
 
 
 # ============================================================
@@ -370,46 +371,45 @@ def send_push_and_wait_ack(data):
 
     expected_token = info["token"]
 
-    try:
-        up_socket.sendto(
-            data,
-            (TTN_HOST, TTN_PORT)
-        )
-
-        deadline = time.time() + ACK_TIMEOUT
-
-        while time.time() < deadline:
-            try:
-                response, remote = up_socket.recvfrom(
-                    65535
-                )
-
-            except socket.timeout:
-                return False
-
-            response_info = parse_semtech_packet(
-                response
+    with push_lock:
+        try:
+            up_socket.sendto(
+                data,
+                (TTN_HOST, TTN_PORT)
             )
 
-            if not response_info:
-                continue
+            deadline = time.time() + ACK_TIMEOUT
 
-            if (
-                response_info["type"] == PUSH_ACK
-                and
-                response_info["token"] == expected_token
-            ):
-                return True
+            while time.time() < deadline:
+                try:
+                    response, remote = up_socket.recvfrom(
+                        65535
+                    )
 
-        return False
+                except socket.timeout:
+                    return False
 
-    except Exception as e:
-        print(
-            f"[WARN] Error enviando PUSH_DATA: {e}"
-        )
+                response_info = parse_semtech_packet(
+                    response
+                )
 
-        return False
+                if not response_info:
+                    continue
 
+                if (
+                    response_info["type"] == PUSH_ACK
+                    and
+                    response_info["token"] == expected_token
+                ):
+                    return True
+
+            return False
+
+        except Exception as e:
+            print(
+                f"[WARN] Error enviando PUSH_DATA: {e}"
+            )
+            return False
 
 # ============================================================
 # RECEPCION LOCAL
