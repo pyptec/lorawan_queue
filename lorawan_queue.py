@@ -324,7 +324,8 @@ def mark_sent(packet_id):
 
         if row and row[0] is not None:
 
-            delay_seconds = (
+            delay_seconds = max(
+                0,
                 now_epoch - int(row[0])
             )
 
@@ -951,6 +952,59 @@ def get_original_time_from_rxpk(data):
             f"[WARN] No se pudo obtener rxpk.time: {e}"
         )
         return utc_epoch()
+    
+    
+def get_original_time_from_rxpk(data):
+
+    now_epoch = utc_epoch()
+
+    try:
+        payload = json.loads(
+            data[12:].decode("utf-8")
+        )
+
+        rxpk = payload.get("rxpk")
+
+        if not isinstance(rxpk, list) or not rxpk:
+            return now_epoch
+
+        rx_time = rxpk[0].get("time")
+
+        if not rx_time:
+            return now_epoch
+
+        dt = datetime.fromisoformat(
+            rx_time.replace("Z", "+00:00")
+        )
+
+        rx_epoch = int(dt.timestamp())
+
+        difference = abs(
+            rx_epoch - now_epoch
+        )
+
+        # Si el reloj del RAK difiere más de 10 segundos,
+        # no lo consideramos confiable.
+        if difference > 10:
+
+            print(
+                f"[TIME] rxpk.time fuera de rango "
+                f"({difference}s). "
+                f"Usando reloj local UTC."
+            )
+
+            return now_epoch
+
+        return rx_epoch
+
+    except Exception as e:
+
+        print(
+            f"[TIME] Error leyendo rxpk.time: {e}. "
+            f"Usando reloj local UTC."
+        )
+
+        return now_epoch
 # ============================================================
 # MAIN
 # ============================================================
