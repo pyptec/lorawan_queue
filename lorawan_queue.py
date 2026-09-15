@@ -213,7 +213,7 @@ def save_packet(data, info):
 
     # Hora REAL/original del paquete
     # Unix Epoch UTC
-    original_time = utc_epoch()
+    original_time = get_original_time_from_rxpk(data)
 
     with db_lock:
 
@@ -923,7 +923,34 @@ def statistics_worker():
             )
 
         time.sleep(5)
+        
+def get_original_time_from_rxpk(data):
+    try:
+        payload = json.loads(
+            data[12:].decode("utf-8")
+        )
 
+        rxpk = payload.get("rxpk")
+
+        if not isinstance(rxpk, list) or not rxpk:
+            return utc_epoch()
+
+        rx_time = rxpk[0].get("time")
+
+        if not rx_time:
+            return utc_epoch()
+
+        dt = datetime.fromisoformat(
+            rx_time.replace("Z", "+00:00")
+        )
+
+        return int(dt.timestamp())
+
+    except Exception as e:
+        print(
+            f"[WARN] No se pudo obtener rxpk.time: {e}"
+        )
+        return utc_epoch()
 # ============================================================
 # MAIN
 # ============================================================
