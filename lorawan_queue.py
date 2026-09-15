@@ -55,6 +55,28 @@ push_lock = threading.Lock()
 # ============================================================
 # UTILIDADES
 # ============================================================
+def utc_epoch():
+    """
+    Hora actual UTC en Unix Epoch, segundos.
+    Ejemplo: 1726167992
+    """
+    return int(time.time())
+
+
+def epoch_to_iso_z(epoch_value):
+    """
+    Convierte Unix Epoch UTC a ISO-8601 UTC para metadata Semtech.
+    Ejemplo:
+    1726167992 -> 2024-09-12T15:06:32.000Z
+    """
+    return (
+        datetime.fromtimestamp(
+            epoch_value,
+            tz=timezone.utc
+        )
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
@@ -156,6 +178,18 @@ def init_db():
             "PRAGMA table_info(uplink_queue)"
         ).fetchall()
     ]
+    
+    if "original_time" not in columns:
+        conn.execute(
+            "ALTER TABLE uplink_queue "
+            "ADD COLUMN original_time INTEGER"
+        )
+
+    if "delay_seconds" not in columns:
+        conn.execute(
+            "ALTER TABLE uplink_queue "
+            "ADD COLUMN delay_seconds INTEGER"
+        )
 
     if "ack_at" not in columns:
         conn.execute(
@@ -172,17 +206,25 @@ def init_db():
 
 
 def save_packet(data, info):
+
     packet_hash = hashlib.sha256(data).hexdigest()
 
-    now = utc_now()
+    received_at = utc_now()
+
+    # Hora REAL/original del paquete
+    # Unix Epoch UTC
+    original_time = utc_epoch()
 
     with db_lock:
+
         conn = sqlite3.connect(DB_PATH)
 
         try:
+
             cursor = conn.execute("""
                 INSERT INTO uplink_queue (
                     received_at,
+                    original_time,
                     gateway_eui,
                     token,
                     packet_hash,
@@ -191,29 +233,38 @@ def save_packet(data, info):
                     attempts,
                     created_at
                 )
-                VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?)
             """, (
-                now,
+                received_at,
+                original_time,
                 info.get("gateway_eui"),
                 info["token"].hex().upper(),
                 packet_hash,
                 sqlite3.Binary(data),
-                now
+                received_at
             ))
 
             conn.commit()
 
-            return cursor.lastrowid, True
+            return (
+                cursor.lastrowid,
+                True,
+                original_time
+            )
 
         except sqlite3.IntegrityError:
-            return None, False
+
+            return None, False, None
 
         finally:
+
             conn.close()
 
 
 def get_pending_packets(limit=10):
+
     with db_lock:
+
         conn = sqlite3.connect(DB_PATH)
 
         rows = conn.execute("""
@@ -221,7 +272,8 @@ def get_pending_packets(limit=10):
                 id,
                 raw_packet,
                 attempts,
-                received_at
+                received_at,
+                original_time
             FROM uplink_queue
             WHERE status = 'pending'
             ORDER BY id ASC
@@ -252,26 +304,46 @@ def mark_attempt(packet_id):
 
 
 def mark_sent(packet_id):
-    now = utc_now()
+
+    now_iso = utc_now()
+    now_epoch = utc_epoch()
 
     with db_lock:
+
         conn = sqlite3.connect(DB_PATH)
+
+        row = conn.execute("""
+            SELECT original_time
+            FROM uplink_queue
+            WHERE id = ?
+        """, (
+            packet_id,
+        )).fetchone()
+
+        delay_seconds = None
+
+        if row and row[0] is not None:
+
+            delay_seconds = (
+                now_epoch - int(row[0])
+            )
 
         conn.execute("""
             UPDATE uplink_queue
             SET status = 'sent',
                 sent_at = ?,
-                ack_at = ?
+                ack_at = ?,
+                delay_seconds = ?
             WHERE id = ?
         """, (
-            now,
-            now,
+            now_iso,
+            now_iso,
+            delay_seconds,
             packet_id
         ))
 
         conn.commit()
         conn.close()
-
 
 def get_statistics():
     with db_lock:
@@ -298,7 +370,51 @@ def get_statistics():
 
     return total, pending, sent
 
+def inject_original_time(data, original_time):
 
+    if len(data) <= 12:
+        return data
+
+    try:
+
+        header = data[:12]
+
+        payload = json.loads(
+            data[12:].decode("utf-8")
+        )
+
+        rxpk = payload.get("rxpk")
+
+        if not isinstance(rxpk, list):
+            return data
+
+        # Semtech rxpk.time requiere ISO UTC,
+        # aunque nosotros internamente guardemos Epoch.
+        original_time_iso = epoch_to_iso_z(
+            original_time
+        )
+
+        for packet in rxpk:
+
+            if isinstance(packet, dict):
+
+                packet["time"] = original_time_iso
+
+        new_payload = json.dumps(
+            payload,
+            separators=(",", ":")
+        ).encode("utf-8")
+
+        return header + new_payload
+
+    except Exception as e:
+
+        print(
+            f"[WARN] No se pudo agregar "
+            f"original_time: {e}"
+        )
+
+        return data
 # ============================================================
 # ACK LOCAL
 # ============================================================
@@ -448,7 +564,7 @@ def local_receiver():
                 # UPLINK RF REAL
                 if has_rxpk:
 
-                    packet_id, inserted = save_packet(
+                    packet_id, inserted, original_time = save_packet(
                         data,
                         info
                     )
@@ -466,6 +582,7 @@ def local_receiver():
                             f"[RX] id={packet_id} "
                             f"GW={info['gateway_eui']} "
                             f"token={info['token'].hex().upper()} "
+                            f"original_time={original_time} "
                             f"guardado"
                         )
 
@@ -501,7 +618,7 @@ def local_receiver():
                 # PUSH_DATA NO IDENTIFICADO
                 else:
 
-                    packet_id, inserted = save_packet(
+                    packet_id, inserted, original_time = save_packet(
                         data,
                         info
                     )
@@ -646,7 +763,13 @@ def queue_worker():
                 time.sleep(RETRY_INTERVAL)
                 continue
 
-            for packet_id, raw_packet, attempts, received_at in packets:
+            for (
+                packet_id,
+                raw_packet,
+                attempts,
+                received_at,
+                original_time
+            ) in packets:
 
                 mark_attempt(packet_id)
 
@@ -655,8 +778,14 @@ def queue_worker():
                     f"intento={attempts + 1}"
                 )
 
+               
                 ack_ok = send_push_and_wait_ack(
-                    raw_packet
+                    packet_to_send
+                )
+                
+                packet_to_send = inject_original_time(
+                    raw_packet,
+                    original_time
                 )
 
                 if ack_ok:
