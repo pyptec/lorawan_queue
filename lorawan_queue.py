@@ -23,9 +23,9 @@ TTN_PORT = 1700
 DB_PATH = "/home/pi/lorawan_queue/lorawan_queue.db"
 
 ACK_TIMEOUT = 2.0
-RETRY_INTERVAL = 5
+RETRY_INTERVAL = 60
 QUEUE_BATCH_SIZE = 10
-
+IDLE_INTERVAL = 5
 
 # ============================================================
 # SEMTECH UDP
@@ -746,7 +746,6 @@ def downstream_receiver():
 # ============================================================
 # WORKER COLA
 # ============================================================
-
 def queue_worker():
 
     print("[INFO] Worker de cola iniciado")
@@ -760,8 +759,10 @@ def queue_worker():
             )
 
             if not packets:
-                time.sleep(RETRY_INTERVAL)
+                time.sleep(IDLE_INTERVAL)
                 continue
+
+            failed = False
 
             for (
                 packet_id,
@@ -771,13 +772,9 @@ def queue_worker():
                 original_time
             ) in packets:
 
-                # Compatibilidad por si hubiera un registro
-                # antiguo sin original_time
                 if original_time is None:
                     original_time = utc_epoch()
 
-                # Primero construimos SIEMPRE el paquete
-                # que se va a enviar a TTN.
                 packet_to_send = inject_original_time(
                     raw_packet,
                     original_time
@@ -799,8 +796,9 @@ def queue_worker():
 
                     mark_sent(packet_id)
 
-                    delay = utc_epoch() - int(
-                        original_time
+                    delay = max(
+                        0,
+                        utc_epoch() - int(original_time)
                     )
 
                     print(
@@ -814,17 +812,18 @@ def queue_worker():
                     print(
                         f"[NO ACK] id={packet_id} "
                         f"permanece PENDING "
-                        f"| original_time={original_time}"
+                        f"| reintento en 60s"
                     )
 
-                    # FIFO:
-                    # si el primero no puede salir,
-                    # no adelantamos los siguientes.
+                    failed = True
                     break
 
                 time.sleep(0.10)
 
-            time.sleep(1)
+            if failed:
+                time.sleep(60)
+            else:
+                time.sleep(1)
 
         except Exception as e:
 
@@ -832,8 +831,7 @@ def queue_worker():
                 f"[ERROR] queue_worker: {e}"
             )
 
-            time.sleep(RETRY_INTERVAL)
-
+            time.sleep(60)
 # ============================================================
 # ESTADISTICAS
 # ============================================================
