@@ -581,9 +581,8 @@ def local_receiver():
                         print(
                             f"[RX] id={packet_id} "
                             f"GW={info['gateway_eui']} "
-                            f"token={info['token'].hex().upper()} "
                             f"original_time={original_time} "
-                            f"guardado"
+                            f"-> PENDING"
                         )
 
                     else:
@@ -774,8 +773,9 @@ def queue_worker():
                 mark_attempt(packet_id)
 
                 print(
-                    f"[QUEUE] enviando id={packet_id} "
-                    f"intento={attempts + 1}"
+                    f"[TX] id={packet_id} "
+                    f"time_original={original_time} "
+                    f"intento={attempts + 1} -> TTN"
                 )
 
                
@@ -791,15 +791,19 @@ def queue_worker():
                 if ack_ok:
                     mark_sent(packet_id)
 
+                    delay = utc_epoch() - int(original_time)
+
                     print(
-                        f"[ACK] id={packet_id} "
-                        f"confirmado por TTN"
+                        f"[ACK] id={packet_id} -> SENT "
+                        f"| original_time={original_time} "
+                        f"| delay={delay}s"
                     )
 
                 else:
                     print(
-                        f"[PENDING] id={packet_id} "
-                        f"sin PUSH_ACK"
+                        f"[NO ACK] id={packet_id} "
+                        f"permanece PENDING "
+                        f"| original_time={original_time}"
                     )
 
                     break
@@ -822,23 +826,90 @@ def queue_worker():
 
 def statistics_worker():
 
+    last_state = None
+
     while running:
+
         try:
+
             total, pending, sent = get_statistics()
 
-            print(
-                f"[QUEUE] total={total} "
-                f"pending={pending} "
-                f"sent={sent}"
+            with db_lock:
+
+                conn = sqlite3.connect(DB_PATH)
+
+                last_row = conn.execute("""
+                    SELECT
+                        id,
+                        original_time,
+                        status,
+                        attempts,
+                        delay_seconds
+                    FROM uplink_queue
+                    ORDER BY id DESC
+                    LIMIT 1
+                """).fetchone()
+
+                oldest_pending = conn.execute("""
+                    SELECT
+                        id,
+                        original_time
+                    FROM uplink_queue
+                    WHERE status='pending'
+                    ORDER BY id ASC
+                    LIMIT 1
+                """).fetchone()
+
+                conn.close()
+
+            state = (
+                total,
+                pending,
+                sent,
+                last_row,
+                oldest_pending
             )
+
+            # Solo imprime si algo cambia
+            if state != last_state:
+
+                print("")
+                print("==============================================")
+                print(" SAMEE LoRaWAN Queue Status")
+                print("==============================================")
+                print(f" Total     : {total}")
+                print(f" Pending   : {pending}")
+                print(f" Sent      : {sent}")
+
+                if last_row:
+
+                    print(
+                        f" Last      : id={last_row[0]} "
+                        f"time={last_row[1]} "
+                        f"status={last_row[2]} "
+                        f"attempts={last_row[3]} "
+                        f"delay={last_row[4]}"
+                    )
+
+                if oldest_pending:
+
+                    print(
+                        f" Oldest    : id={oldest_pending[0]} "
+                        f"time={oldest_pending[1]}"
+                    )
+
+                print("==============================================")
+                print("")
+
+                last_state = state
 
         except Exception as e:
+
             print(
-                f"[ERROR] statistics: {e}"
+                f"[ERROR] statistics_worker: {e}"
             )
 
-        time.sleep(60)
-
+        time.sleep(5)
 
 # ============================================================
 # MAIN
