@@ -748,12 +748,12 @@ def downstream_receiver():
 
 def queue_worker():
 
-    print(
-        "[INFO] Worker de cola iniciado"
-    )
+    print("[INFO] Worker de cola iniciado")
 
     while running:
+
         try:
+
             packets = get_pending_packets(
                 limit=QUEUE_BATCH_SIZE
             )
@@ -770,6 +770,18 @@ def queue_worker():
                 original_time
             ) in packets:
 
+                # Compatibilidad por si hubiera un registro
+                # antiguo sin original_time
+                if original_time is None:
+                    original_time = utc_epoch()
+
+                # Primero construimos SIEMPRE el paquete
+                # que se va a enviar a TTN.
+                packet_to_send = inject_original_time(
+                    raw_packet,
+                    original_time
+                )
+
                 mark_attempt(packet_id)
 
                 print(
@@ -778,20 +790,17 @@ def queue_worker():
                     f"intento={attempts + 1} -> TTN"
                 )
 
-               
                 ack_ok = send_push_and_wait_ack(
                     packet_to_send
                 )
-                
-                packet_to_send = inject_original_time(
-                    raw_packet,
-                    original_time
-                )
 
                 if ack_ok:
+
                     mark_sent(packet_id)
 
-                    delay = utc_epoch() - int(original_time)
+                    delay = utc_epoch() - int(
+                        original_time
+                    )
 
                     print(
                         f"[ACK] id={packet_id} -> SENT "
@@ -800,12 +809,16 @@ def queue_worker():
                     )
 
                 else:
+
                     print(
                         f"[NO ACK] id={packet_id} "
                         f"permanece PENDING "
                         f"| original_time={original_time}"
                     )
 
+                    # FIFO:
+                    # si el primero no puede salir,
+                    # no adelantamos los siguientes.
                     break
 
                 time.sleep(0.10)
@@ -813,12 +826,12 @@ def queue_worker():
             time.sleep(1)
 
         except Exception as e:
+
             print(
                 f"[ERROR] queue_worker: {e}"
             )
 
             time.sleep(RETRY_INTERVAL)
-
 
 # ============================================================
 # ESTADISTICAS
