@@ -58,3 +58,6 @@ CONFIRMADO: presencia de los siete documentos, once secciones obligatorias y enl
 
 ### Corrección de validación y publicación
 ERROR observado: `git diff --cached --check` detectó una línea vacía final heredada en docs/README_PREVIO.md; se detuvo antes de commit/push. CORREGIDO: se normalizó únicamente el final de ese antecedente, conservando su contenido textual. Se repiten staging y validación antes de publicar. Comandos: git add de los siete documentos; git diff --cached --check; git commit; git push origin main; git status --short; git log -1 --oneline. Los resultados de publicación se registrarán después de observarlos.
+
+### Cierre documental de FASE 1
+CONFIRMADO: validación del staging con código 0; commit documental `a056dd7`; push a origin/main exitoso (`a4a4cd6..a056dd7`); git status --short sin cambios tras publicar. Solo siete archivos documentales modificados/creados. Se registra el resultado antes de abrir otra fase. FASE 1 CONFIRMADO en su alcance documental; no confirma operación del sistema. FASE 2 PENDIENTE por falta de acceso y evidencia del gateway. Pull en Raspberry y validación remota PENDIENTES. Esta anotación de cierre se publica mediante un commit documental adicional.

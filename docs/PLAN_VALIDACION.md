@@ -4,7 +4,7 @@
 
 | Fase | Resultado registrado | Estado |
 |---|---|---|
-| 1 Documentación | Archivos preparados; ver BITACORA.md para validación y Git | PENDIENTE |
+| 1 Documentación | Estructura y enlaces validados; commit a056dd7 publicado; ver BITACORA.md | CONFIRMADO |
 | 2 Gateway | Sin acceso ni evidencia remota | PENDIENTE |
 | 3 TTN | Sin acceso ni eventos observados | PENDIENTE |
 | 4 Cola | Hallazgos preliminares estáticos; auditoría no iniciada | PENDIENTE |
