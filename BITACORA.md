@@ -61,3 +61,58 @@ ERROR observado: `git diff --cached --check` detectó una línea vacía final he
 
 ### Cierre documental de FASE 1
 CONFIRMADO: validación del staging con código 0; commit documental `a056dd7`; push a origin/main exitoso (`a4a4cd6..a056dd7`); git status --short sin cambios tras publicar. Solo siete archivos documentales modificados/creados. Se registra el resultado antes de abrir otra fase. FASE 1 CONFIRMADO en su alcance documental; no confirma operación del sistema. FASE 2 PENDIENTE por falta de acceso y evidencia del gateway. Pull en Raspberry y validación remota PENDIENTES. Esta anotación de cierre se publica mediante un commit documental adicional.
+
+## PROMPT 002
+
+### ROL
+Ingeniero IoT/Linux; auditoría solo lectura.
+### TAREA
+Auditar repositorio, archivos, procesos, systemd, UDP, SQLite, estados, tiempos, reintentos y logs sin editar ni ejecutar Git de escritura.
+### FORMATO
+Doce apartados de auditoría y estados permitidos; registro retrospectivo autorizado documentalmente en PROMPT 003.
+### EVIDENCIA
+Lectura del adjunto Pasted text.txt, reglas y configuración SSH local. Alias rak-gateway: pi@192.168.2.129. Dos intentos rechazados con Permission denied (publickey,password); el segundo tras el aviso del usuario de que había cerrado otra aplicación. Ningún comando remoto llegó a ejecutarse.
+### ARCHIVOS CONSULTADOS
+Adjunto PROMPT 002, AGENTS.md, configuración SSH del PC y documentación local.
+### ARCHIVOS MODIFICADOS
+Ninguno durante PROMPT 002. Esta entrada se añade durante PROMPT 003.
+### COMANDOS EJECUTADOS
+Get-Content; git status --short; git log -3 --oneline; Get-Command ssh; búsqueda local rg. Dos intentos: ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o ConnectTimeout=10 rak-gateway con consultas hostname/uname/date/estado Git; ambos terminaron con código 1 antes de ejecutar consultas remotas.
+### RESULTADO
+Auditoría remota PENDIENTE. En PROMPT 003 el usuario aporta como resultado de PROMPT 002: Packet Forwarder directo a TTN, cola no activa, 58 eventos históricos sent, proxy sin escucha y Uvicorn :8080 ejecutando ttn_iotrack_receiver.py.
+### VALIDACIÓN
+CONFIRMADO el rechazo SSH observado y la recepción de información del usuario. Sin salidas remotas brutas para corroborar esos resultados directamente.
+### PENDIENTES
+Contrastar configuración, versión desplegada, procesos, unidad, DB y actividad con evidencia remota.
+### ESTADO
+PENDIENTE para auditoría directa; ERROR de autenticación observado. No inferir operación actual de 58 sent históricos.
+
+## PROMPT 003
+
+### ROL
+Ingeniero IoT/Linux, LoRaWAN/RAK5146/Semtech UDP/Python/SQLite/systemd; trabajo exclusivamente en PC.
+### TAREA
+Preparar activación controlada: revisar código completo y documentos, crear deploy/lorawan-queue.service con Python .venv y usuario pi, documentar cambio manual del forwarder a localhost, validar sintaxis y preparar commit/push. No instalar ni cambiar Raspberry; no introducir cambios funcionales innecesarios.
+### FORMATO
+Secciones permanentes y estados permitidos. Resumen fiel de requisitos, no transcripción literal del prompt.
+### EVIDENCIA
+HEAD inicial c938de39fb36ee2c8b4d1d39943da11178a789bb, main, árbol limpio. Python del PC: Python310/python.exe. Lectura completa de lorawan_queue.py, README.md, AGENTS.md y BITACORA.md; lectura de arquitectura y plan. Estado remoto provisto por el usuario con procedencia indicada en PROMPT 002.
+### ARCHIVOS CONSULTADOS
+lorawan_queue.py, README.md, AGENTS.md, BITACORA.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md; Git y resolución de Python.
+### ARCHIVOS MODIFICADOS
+deploy/lorawan-queue.service (nuevo); README.md, BITACORA.md, docs/ARQUITECTURA.md y docs/PLAN_VALIDACION.md. Código Python sin cambios.
+### COMANDOS EJECUTADOS
+Get-Content completo de los archivos indicados; lectura adicional del tramo final del Python y README ante truncamiento de salida; git status --short; git rev-parse HEAD; git remote -v; Get-Command python,py. New-Item deploy; Set-Content ASCII para unidad y Add-Content UTF-8 para documentación. Comandos de validación y publicación se registran tras observar resultados.
+### RESULTADO
+Preparado servicio User=pi, WorkingDirectory=/home/pi/lorawan_queue, ExecStart con .venv/bin/python3 y script absoluto, Restart=always, RestartSec=5. Salida Python sin buffer para journal. Documentados instalación futura, revisión, cambio manual JSON, validación y reversión sin ejecutar nada remoto.
+### VALIDACIÓN
+Flujo uplink y ramas directas confirmados por inspección estática. No puede confirmarse ausencia de retardos indirectos: receptor compartido con SQLite/espera de estadísticas y worker con intervalo ocioso/backlog. Se conserva el código y se documenta limitación antes de activar. Sintaxis, unidad y Git pendientes de comprobación posterior a escritura.
+### PENDIENTES
+Validar sintaxis y unidad local; commit/push PC. Validación nativa systemd, rutas/permisos en Raspberry y pruebas RF/TTN siguen PENDIENTES. Resolver/verificar requisito temporal antes de activar.
+### ESTADO
+PENDIENTE validación local y publicación. Preparación únicamente; sin activación real.
+
+### Validación local de PROMPT 003
+CONFIRMADO: `python -m py_compile lorawan_queue.py` terminó con código 0 sin salida de error; no se importó ni ejecutó el módulo. `git diff --check` código 0. `git diff --quiet -- lorawan_queue.py` código 0: Python intacto. Comprobaciones PowerShell de cinco directivas requeridas de unidad y enlaces locales: OK. Servicio guardado con saltos LF. Instrucción futura de venv condicionada a directorio ausente. Rutas Linux revisadas como valores declarados; existencia/permisos remotos PENDIENTES. systemd-analyze no ejecutado en Windows; validación nativa PENDIENTE. No hubo conexión SSH ni cambios en Raspberry durante este prompt.
+
+Resultado de preparación local: CONFIRMADO. Arquitectura directa por ramas CONFIRMADO por código; ausencia de latencia y activación real PENDIENTES. A continuación se ejecutan desde PC: git add explícito de cinco archivos, git diff --cached --check, git commit y git push origin main; sus resultados se informan tras observarlos. No se modifica AGENTS.md ni archivos históricos.

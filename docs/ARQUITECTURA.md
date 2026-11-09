@@ -46,3 +46,18 @@ Estados previstos: pending al persistir; sent según criterio de envío document
 - Definir alternativa de recuperación de datos de aplicación si TTN no acepta retransmisiones tardías; no asumir descifrado del payload en el gateway ni instalar un Network Server sin decisión documentada.
 - Definir límites, backoff, expiración, failed, reinicio y capacidad de disco.
 - Dashboard posterior: gateway, TTN, pending/sent/failed, último uplink, último reenvío, intentos, timestamp original y de envío. Estado desconocido cuando falte evidencia; no mostrar conexión TTN por mera conexión a Internet.
+
+## PROMPT 003: arquitectura revisada para preparación
+
+Estado remoto aportado por el usuario (resultado atribuido a PROMPT 002): forwarder directo a nam1.cloud.thethings.network:1700, cola inactiva, proxy sin escucha, SQLite con 58 sent históricos; :8080 es ttn_iotrack_receiver.py. CONFIRMADO como información recibida, no como medición remota del asistente. No permite cerrar validación RF/TTN.
+
+Configuración local confirmada: LOCAL_IP (no LOCAL_HOST) 127.0.0.1; LOCAL_PORT 1700; TTN_HOST nam1.cloud.thethings.network; TTN_PORT 1700; ACK_TIMEOUT 2.0; RETRY_INTERVAL 60; DB_PATH /home/pi/lorawan_queue/lorawan_queue.db. Los sleeps de fallo usan 60 literal.
+
+```text
+PUSH_DATA/rxpk -> save_packet/commit SQLite/pending -> PUSH_ACK local
+             -> queue_worker -> mark_attempt -> envío TTN -> PUSH_ACK -> sent
+PULL_DATA/TX_ACK -> local_receiver -> down_socket -> TTN
+PULL_ACK/PULL_RESP -> downstream_receiver -> local_socket -> forwarder
+```
+
+Las ramas de downlink no usan SQLite, push_lock ni cola. No se garantiza independencia temporal: SQLite y estadísticas bloquean el receptor compartido de PULL_DATA/TX_ACK. El drenaje FIFO y el intervalo ocioso del worker también retrasan uplinks que desencadenan downlinks. No se cambia el código en esta preparación; ausencia de retardos y operación real permanecen PENDIENTES. La unidad deploy/lorawan-queue.service usa usuario pi y el Python del .venv, sin instalarse en Raspberry. Consultar README para procedimiento y reversión.

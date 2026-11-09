@@ -45,3 +45,13 @@ Después consultar la unidad identificada con `systemctl cat <unidad>` y `journa
 ## Plantilla de prueba
 
 Fecha/zona; fase; objetivo; PC/Raspberry/TTN; versiones y commit; configuración relevante; condiciones iniciales; comando exacto; salida/exit code; resultado esperado y obtenido; artefactos; limitaciones; pendientes; estado permitido. No usar capturas simuladas como evidencia.
+
+## PROMPT 003: preparación local y puerta de activación
+
+La petición actual autoriza preparar la unidad antes de las fases operativas completas. No cierra automáticamente las verificaciones anteriores. Estado comunicado por el usuario para PROMPT 002: forwarder directo a TTN, cola inactiva, sin escucha del proxy y 58 sent históricos; Uvicorn :8080 es otro receptor. Evidencia remota bruta no disponible en esta sesión; verificaciones directas PENDIENTES.
+
+- CONFIRMADO: revisión estática de constantes, persistencia, ACK local, worker y ramas directas del protocolo; sin cambios de Python.
+- PENDIENTE antes de activar: resolver o medir bloqueos del receptor por SQLite/estadísticas y demora de uplinks por FIFO/idle; no afirmar cumplimiento de RX1/RX2 por tener hilo downstream.
+- Validación en PC requerida antes de commit: `python -m py_compile lorawan_queue.py`, revisión estática de unidad/rutas y `git diff --check`. La compilación escribe únicamente cache local; no importa el módulo ni abre sockets.
+- PENDIENTE en Raspberry: pull, existencia del intérprete .venv, permisos y respaldo SQLite, revisión de unidad con systemd-analyze, instalación autorizada y escucha UDP, cambio manual del JSON efectivo, validación de uplinks/TTN y downlinks. Consultar README.
+- No ejecutar en esta intervención instalación, reinicios, cambio del forwarder o corte de Internet. El servicio web existente :8080 no forma parte del proxy.

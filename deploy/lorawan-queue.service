@@ -1,0 +1,16 @@
+[Unit]
+Description=LoRaWAN Semtech UDP store-and-forward proxy
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/lorawan_queue
+ExecStart=/home/pi/lorawan_queue/.venv/bin/python3 /home/pi/lorawan_queue/lorawan_queue.py
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

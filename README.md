@@ -55,3 +55,61 @@ No hay evidencia todavía de ausencia de retardos en downlinks: el receptor loca
 ## Flujo de cambios
 
 Revisar código, configuración y estado real; identificar el problema; proponer cambio; modificar solo en el PC; validar localmente; commit; push; pull en Raspberry; validar allí; registrar evidencia. No registrar pasos pendientes como ejecutados. No modificar funciones existentes antes de reunir la evidencia requerida.
+
+## PROMPT 003: preparación de activación controlada
+
+Servicio preparado en [deploy/lorawan-queue.service](deploy/lorawan-queue.service), todavía sin instalar. Se conserva íntegramente lorawan_queue.py. `LOCAL_HOST` no existe: el nombre utilizado es `LOCAL_IP = "127.0.0.1"`.
+
+Estado comunicado por el usuario al abrir PROMPT 003, atribuido a PROMPT 002: Packet Forwarder directo a `nam1.cloud.thethings.network:1700`; cola inactiva; proxy UDP sin escucha; SQLite con 58 eventos históricos `sent`; Uvicorn :8080 pertenece a `ttn_iotrack_receiver.py`. No son mediciones de esta sesión: los intentos SSH del asistente fueron rechazados. Los 58 eventos no prueban recepción o reenvío actuales.
+
+### Revisión de arquitectura
+
+CONFIRMADO por lectura local: `local_receiver` persiste PUSH_DATA con rxpk como pending antes del ACK local. `queue_worker` consulta FIFO, modifica la copia temporal, incrementa intentos, envía a TTN y espera PUSH_ACK con token coincidente; solo entonces `mark_sent` registra sent. Sin ACK permanece pending y espera 60 s. No hay transición failed.
+
+CONFIRMADO por lectura local: PULL_DATA y TX_ACK se envían por down_socket sin cola; downstream_receiver reenvía PULL_ACK y PULL_RESP al último cliente PULL_DATA sin SQLite ni espera de PUSH_ACK. PENDIENTE: garantizar latencia, pues local_receiver comparte recepción con persistencia y espera síncrona de estadísticas, y el worker puede esperar hasta 5 s sin pendientes. Preparar esta unidad no resuelve esos bloqueos ni garantiza Join Accept/RX1/RX2. Revisar y validar antes de cambiar el destino del forwarder.
+
+### Despliegue manual futuro (NO ejecutado)
+
+Tras completar revisión, commit y push en PC, usar Raspberry solo para pull, instalación, ejecución y validación. No hacer git add/commit/push allí. Identificar primero unidad real del forwarder, archivo JSON efectivo, estado Git, procesos, permisos y ocupación UDP 1700. No lanzar otra instancia manual del proxy: el código usa SO_REUSEADDR y no garantiza exclusividad de puerto.
+
+En Raspberry, con árbol limpio y desde el repositorio correcto, el despliegue previsto es:
+
+```bash
+cd /home/pi/lorawan_queue
+git status --short
+git pull --ff-only
+# Si .venv no existe, crear el entorno; no reemplazar uno existente sin revisarlo.
+if [ ! -d .venv ]; then python3 -m venv .venv; fi
+.venv/bin/python3 -m py_compile lorawan_queue.py
+```
+
+Verificar ejecutable `/home/pi/lorawan_queue/.venv/bin/python3`, lectura del script y permisos del usuario pi para el directorio, la DB existente y sus archivos auxiliares. Conservar respaldo consistente de SQLite y de la configuración efectiva del forwarder; no copiar solo el .db de una base activa en WAL. No borrar ni reinicializar los 58 registros. El arranque ejecuta init_db y puede añadir columnas/índice si faltan.
+
+Antes de activar: revisar la limitación de latencia anterior y validar la unidad con `systemd-analyze verify deploy/lorawan-queue.service`. Solo cuando se autorice la activación real:
+
+```bash
+sudo install -m 0644 deploy/lorawan-queue.service /etc/systemd/system/lorawan-queue.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now lorawan-queue.service
+systemctl status lorawan-queue.service --no-pager
+sudo ss -lunp
+journalctl -u lorawan-queue.service -n 100 --no-pager
+```
+
+No se modifica automáticamente la unidad del forwarder ni se presupone su nombre o ruta. Primero verificar que el proxy está sano y escucha en 127.0.0.1:1700. Después, en una intervención autorizada, cambiar únicamente estos campos del JSON efectivo, manteniendo EUI, SPI, AU915 y canales:
+
+```json
+{
+  "server_address": "127.0.0.1",
+  "serv_port_up": 1700,
+  "serv_port_down": 1700
+}
+```
+
+El destino upstream permanece en lorawan_queue.py: `nam1.cloud.thethings.network:1700`. Aplicar la configuración mediante el procedimiento de la unidad real identificada; todavía no se autoriza ni ejecuta ese cambio. Uvicorn :8080 corresponde al receptor externo informado y no debe detenerse para liberar UDP 1700.
+
+### Validación posterior y reversión (PENDIENTE)
+
+Correlacionar uplink nuevo, inserción pending, intento, PUSH_ACK, sent y recepción en aplicación TTN; revisar tiempos y no confundir ACK UDP con entrega final. Verificar PULL_ACK, PULL_RESP, TX_ACK y Join Accept/RX1/RX2 con y sin tráfico pendiente; medir latencias. No hacer aún prueba de pérdida de Internet.
+
+Si falla la activación, restaurar primero el destino y puertos anteriores del forwarder desde el respaldo y aplicar su configuración con el procedimiento verificado. Después detener/deshabilitar el proxy si corresponde. Conservar SQLite y logs; documentar todo. Ninguna instrucción de esta sección se ha ejecutado en Raspberry durante PROMPT 003.
