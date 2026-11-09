@@ -50,13 +50,13 @@ Se conserva el datagrama recibido en `raw_packet`; el worker modifica `rxpk[].ti
 
 No se promete recuperación completa mediante reenvío UDP tardío. La aceptación por TTN, los contadores de trama y la entrega final requieren pruebas. Conservar `time` no recupera ventanas RX1/RX2 vencidas. Los Join Request y mensajes que requieren respuesta inmediata necesitan tratamiento explícito en la auditoría.
 
-No hay evidencia todavía de ausencia de retardos en downlinks: el receptor local también espera ACK de estadísticas y hace escrituras SQLite. Ver [arquitectura](docs/ARQUITECTURA.md).
+Desde PROMPT 004, el receptor no espera ACK remoto de estadísticas: las delega a stat_worker mediante una cola acotada no bloqueante. Aún realiza escrituras SQLite para uplinks; ausencia de retardos global y latencia real PENDIENTES. Ver [arquitectura](docs/ARQUITECTURA.md).
 
 ## Flujo de cambios
 
 Revisar código, configuración y estado real; identificar el problema; proponer cambio; modificar solo en el PC; validar localmente; commit; push; pull en Raspberry; validar allí; registrar evidencia. No registrar pasos pendientes como ejecutados. No modificar funciones existentes antes de reunir la evidencia requerida.
 
-## PROMPT 003: preparación de activación controlada
+## PROMPT 003: preparación de activación controlada (registro de esa revisión)
 
 Servicio preparado en [deploy/lorawan-queue.service](deploy/lorawan-queue.service), todavía sin instalar. Se conserva íntegramente lorawan_queue.py. `LOCAL_HOST` no existe: el nombre utilizado es `LOCAL_IP = "127.0.0.1"`.
 
@@ -113,3 +113,26 @@ El destino upstream permanece en lorawan_queue.py: `nam1.cloud.thethings.network
 Correlacionar uplink nuevo, inserción pending, intento, PUSH_ACK, sent y recepción en aplicación TTN; revisar tiempos y no confundir ACK UDP con entrega final. Verificar PULL_ACK, PULL_RESP, TX_ACK y Join Accept/RX1/RX2 con y sin tráfico pendiente; medir latencias. No hacer aún prueba de pérdida de Internet.
 
 Si falla la activación, restaurar primero el destino y puertos anteriores del forwarder desde el respaldo y aplicar su configuración con el procedimiento verificado. Después detener/deshabilitar el proxy si corresponde. Conservar SQLite y logs; documentar todo. Ninguna instrucción de esta sección se ha ejecutado en Raspberry durante PROMPT 003.
+
+## PROMPT 004: estadísticas fuera del receptor
+
+CORREGIDO en el código del PC: la rama solo-stat de local_receiver podía esperar ACK_TIMEOUT=2 s en send_push_and_wait_ack, además de esperar push_lock si lo tenía el worker de uplinks. Ahora envía PUSH_ACK local, ejecuta stat_queue.put_nowait(data) y vuelve al ciclo de recepción sin esperar ACK remoto ni espacio disponible.
+
+```text
+PUSH_DATA/stat -> local_receiver -> PUSH_ACK local
+                              -> stat_queue (100 datagramas, memoria)
+                              -> stat_worker -> TTN/PUSH_ACK remoto
+```
+
+Si se llena, se descarta la nueva estadística y se registra `[WARN] stat_queue llena`; el ACK local ya se ha enviado. El worker espera hasta 1 s por una entrada, envía con la función ACK existente y completa la tarea incluso ante error. Las estadísticas no se persisten ni reintentan por este worker; no se garantiza su entrega y se pierden las pendientes al terminar el proceso. Se conserva el socket upstream y push_lock compartidos para evitar mezclar respuestas ACK entre workers: esa espera queda fuera del receptor y todavía puede influir en tiempos de envío de uplinks.
+
+Uplinks rxpk, paquetes mixtos rxpk+stat, SQLite, queue_worker, tiempos, reintentos y rutas de downlink mantienen su lógica. No se afirma eliminación de toda latencia: siguen la persistencia SQLite, el intervalo ocioso y backlog de uplinks y posibles bloqueos de salida de logs/sockets. No se ha activado el servicio ni cambiado la Raspberry.
+
+Validación reproducible en PC:
+
+```bash
+python -m py_compile lorawan_queue.py
+python -m unittest discover -s tests -v
+```
+
+Las pruebas cargan solo definiciones de funciones mediante AST, con sockets y envío simulados: no importan el módulo completo, no abren UDP ni tocan SQLite/TTN. Cubren ACK remoto retenido con PULL_DATA/TX_ACK posteriores, saturación, resultados/error de envío y prioridad de rxpk en datagramas mixtos. No sustituyen pruebas de red ni temporización real en Raspberry.

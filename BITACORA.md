@@ -116,3 +116,38 @@ PENDIENTE validación local y publicación. Preparación únicamente; sin activa
 CONFIRMADO: `python -m py_compile lorawan_queue.py` terminó con código 0 sin salida de error; no se importó ni ejecutó el módulo. `git diff --check` código 0. `git diff --quiet -- lorawan_queue.py` código 0: Python intacto. Comprobaciones PowerShell de cinco directivas requeridas de unidad y enlaces locales: OK. Servicio guardado con saltos LF. Instrucción futura de venv condicionada a directorio ausente. Rutas Linux revisadas como valores declarados; existencia/permisos remotos PENDIENTES. systemd-analyze no ejecutado en Windows; validación nativa PENDIENTE. No hubo conexión SSH ni cambios en Raspberry durante este prompt.
 
 Resultado de preparación local: CONFIRMADO. Arquitectura directa por ramas CONFIRMADO por código; ausencia de latencia y activación real PENDIENTES. A continuación se ejecutan desde PC: git add explícito de cinco archivos, git diff --cached --check, git commit y git push origin main; sus resultados se informan tras observarlos. No se modifica AGENTS.md ni archivos históricos.
+
+## PROMPT 004
+
+### ROL
+Ingeniero IoT/Linux: LoRaWAN, Semtech UDP, RAK5146/SX1303, Python multihilo, UDP, SQLite y TTN; trabajo solo en PC.
+
+### TAREA
+Prompt recibido en adjunto Pasted text.txt: eliminar espera remota de estadísticas en local_receiver con cola thread-safe acotada y stat_worker independiente; ACK local primero; descartar sin bloqueo si llena con aviso específico. Preservar uplinks SQLite y rutas downlink, compilar, documentar, commit y push. No activar servicio ni modificar Raspberry. Este registro resume el prompt recibido.
+
+### FORMATO
+Secciones permanentes; estados permitidos y entrega de archivos, resumen, py_compile, commit y push.
+
+### EVIDENCIA
+HEAD inicial 831a030, árbol limpio. Código local revisado completamente y constantes coincidentes con contexto aportado. Rama has_stat llamaba send_push_and_wait_ack: espera ACK_TIMEOUT=2.0 s y potencial espera adicional por push_lock. Estado remoto histórico aportado por el usuario se conserva con su procedencia; no se realizó conexión remota durante este prompt.
+
+### ARCHIVOS CONSULTADOS
+Adjunto PROMPT 004, AGENTS.md, lorawan_queue.py, README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md y tramo de BITACORA.md de intervenciones anteriores; Git HEAD/estado.
+
+### ARCHIVOS MODIFICADOS
+lorawan_queue.py; tests/test_stat_forwarding.py (nuevo); README.md; BITACORA.md; docs/ARQUITECTURA.md; docs/PLAN_VALIDACION.md. Unidad systemd sin cambios.
+
+### COMANDOS EJECUTADOS
+Get-Content de adjunto/reglas/código/documentos; git status --short; git log -1 --oneline. Escritura local mediante PowerShell con comprobación de bloques esperados y UTF-8 sin BOM; creación tests. python -m py_compile lorawan_queue.py; python -m unittest discover -s tests -v; git diff --check; git diff -- lorawan_queue.py. Script Python leído desde stdin compara AST actual con git show HEAD:lorawan_queue.py y verifica ausencia de espera ACK en receptor y registro del worker. Actualización documental mediante PowerShell. Validación final y Git de publicación se ejecutan después de esta anotación.
+
+### RESULTADO
+CORREGIDO el bloqueo por ACK/lock remoto de estadísticas en el receptor: import queue, stat_queue maxsize=100, ACK local seguido de put_nowait con captura queue.Full y aviso requerido. stat_worker consume con timeout, usa envío/ACK existente y task_done en finally; daemon añadido en main. Estadísticas volátiles descartables, sin reintento propio; up_socket/push_lock conservados para serializar ACK con worker de uplinks. Se mantiene íntegra la lógica rxpk, SQLite, queue_worker, timestamps, estados y downstream.
+
+### VALIDACIÓN
+CONFIRMADO: py_compile código 0; cuatro pruebas correctas (0.028 s): receptor continúa con ACK remoto retenido, cola llena no bloquea tráfico de control, finalización de tarea en ACK/no ACK/error, prioridad de rxpk sobre stat en paquetes mixtos. Comparación AST confirma que solo local_receiver y main cambian entre funciones existentes y se añade stat_worker. Validación aislada sin UDP/TTN/SQLite real; no acredita latencia real ni ausencia total de bloqueos. git diff --check código 0 antes de actualizar documentos; se repite antes de commit.
+
+### PENDIENTES
+Commit/push tras validar documentación; pull y pruebas remotas futuras solo en intervención autorizada. Persistencia SQLite, idle/backlog y temporización LoRaWAN siguen pendientes, fuera del objetivo. No activar servicio todavía.
+
+### ESTADO
+CORREGIDO y CONFIRMADO en PC para la espera remota de estadísticas del receptor. PENDIENTE validación operacional. Sin cambios en Raspberry.

@@ -61,3 +61,11 @@ PULL_ACK/PULL_RESP -> downstream_receiver -> local_socket -> forwarder
 ```
 
 Las ramas de downlink no usan SQLite, push_lock ni cola. No se garantiza independencia temporal: SQLite y estadísticas bloquean el receptor compartido de PULL_DATA/TX_ACK. El drenaje FIFO y el intervalo ocioso del worker también retrasan uplinks que desencadenan downlinks. No se cambia el código en esta preparación; ausencia de retardos y operación real permanecen PENDIENTES. La unidad deploy/lorawan-queue.service usa usuario pi y el Python del .venv, sin instalarse en Raspberry. Consultar README para procedimiento y reversión.
+
+## PROMPT 004: corrección del envío de estadísticas
+
+Las observaciones anteriores describen el código base y las revisiones históricas hasta PROMPT 003. CORREGIDO en PC: la rama solo-stat ya no llama send_push_and_wait_ack; tras PUSH_ACK local utiliza stat_queue.put_nowait, con capacidad de 100 datagramas. Si no hay espacio descarta la nueva estadística y avisa `[WARN] stat_queue llena`.
+
+stat_worker, iniciado como daemon junto a local_receiver, downstream_receiver y queue_worker, espera por la cola con timeout y llama a la función de envío/ACK existente. Usa task_done en finally incluso ante excepciones. No hay SQLite ni persistencia de estadísticas, ni reintento propio tras fallo. up_socket/push_lock permanecen compartidos con queue_worker; solo los workers pueden esperar ese ACK/lock, no el receptor por esta rama.
+
+CONFIRMADO en comparación AST: salvo local_receiver y main, todas las funciones existentes mantienen su estructura, incluida persistencia y downstream_receiver. PULL_DATA/TX_ACK no pasan por stat_queue y PULL_ACK/PULL_RESP siguen directos. Paquetes mixtos rxpk+stat conservan prioridad de rxpk. Persistencia de uplinks y latencia por backlog/idle permanecen sin corregir en este prompt; operación y tiempos reales PENDIENTES.

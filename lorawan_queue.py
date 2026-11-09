@@ -6,6 +6,7 @@ import hashlib
 import threading
 import time
 import json
+import queue
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -50,6 +51,8 @@ last_pull_client = None
 client_lock = threading.Lock()
 db_lock = threading.Lock()
 push_lock = threading.Lock()
+
+stat_queue = queue.Queue(maxsize=100)
 
 
 # ============================================================
@@ -529,6 +532,29 @@ def send_push_and_wait_ack(data):
             return False
 
 # ============================================================
+# WORKER DE ESTADISTICAS (SIN PERSISTENCIA)
+# ============================================================
+
+def stat_worker():
+    while running:
+        try:
+            data = stat_queue.get(timeout=1.0)
+        except queue.Empty:
+            continue
+
+        try:
+            ok = send_push_and_wait_ack(data)
+            if ok:
+                print("[STAT] enviado a TTN")
+            else:
+                print("[STAT] TTN sin respuesta")
+        except Exception as e:
+            print(f"[WARN] stat_worker: {e}")
+        finally:
+            stat_queue.task_done()
+
+
+# ============================================================
 # RECEPCION LOCAL
 # ============================================================
 
@@ -603,17 +629,10 @@ def local_receiver():
                             addr
                         )
 
-                    ok = send_push_and_wait_ack(data)
-
-                    if ok:
-                        print(
-                            "[STAT] enviado a TTN"
-                        )
-
-                    else:
-                        print(
-                            "[STAT] TTN sin respuesta"
-                        )
+                    try:
+                        stat_queue.put_nowait(data)
+                    except queue.Full:
+                        print("[WARN] stat_queue llena")
 
                 # PUSH_DATA NO IDENTIFICADO
                 else:
@@ -1046,6 +1065,11 @@ def main():
 
         threading.Thread(
             target=queue_worker,
+            daemon=True
+        ),
+
+        threading.Thread(
+            target=stat_worker,
             daemon=True
         ),
 

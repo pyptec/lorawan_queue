@@ -55,3 +55,14 @@ La petición actual autoriza preparar la unidad antes de las fases operativas co
 - Validación en PC requerida antes de commit: `python -m py_compile lorawan_queue.py`, revisión estática de unidad/rutas y `git diff --check`. La compilación escribe únicamente cache local; no importa el módulo ni abre sockets.
 - PENDIENTE en Raspberry: pull, existencia del intérprete .venv, permisos y respaldo SQLite, revisión de unidad con systemd-analyze, instalación autorizada y escucha UDP, cambio manual del JSON efectivo, validación de uplinks/TTN y downlinks. Consultar README.
 - No ejecutar en esta intervención instalación, reinicios, cambio del forwarder o corte de Internet. El servicio web existente :8080 no forma parte del proxy.
+
+## PROMPT 004: pruebas de aislamiento de estadísticas
+
+CONFIRMADO en PC: py_compile código 0; cuatro pruebas unittest correctas. Tests en tests/test_stat_forwarding.py, con funciones extraídas por AST y dependencias simuladas, sin importar el programa completo ni abrir sockets/SQLite:
+
+1. Retener el envío remoto de estadísticas en otro hilo y comprobar ACK local y reenvío de PULL_DATA/TX_ACK antes de liberar la respuesta.
+2. Llenar 100 entradas; comprobar descarte/aviso, ACK local y continuidad del tráfico de control sin llamada remota desde receptor.
+3. Procesar ACK válido, ausencia de ACK y excepción; verificar finalización de tarea de cola.
+4. Paquete mixto rxpk+stat conserva save_packet antes del ACK y no entra a stat_queue.
+
+CONFIRMADO por AST contra HEAD previo: local_receiver no contiene llamada a send_push_and_wait_ack, stat_worker registrado en main; funciones existentes salvo receptor/main sin cambios. No se prueban transporte real, temporización RX1/RX2 o entrega a TTN. PENDIENTE en una fase autorizada: comprobar en Raspberry tráfico de control durante silencio de TTN y saturación de estadísticas, latencia de SQLite y backlog. No se activa lorawan-queue.service ni se corta Internet en este prompt.
