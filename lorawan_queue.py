@@ -53,6 +53,8 @@ db_lock = threading.Lock()
 push_lock = threading.Lock()
 
 stat_queue = queue.Queue(maxsize=100)
+fast_queue = queue.Queue(maxsize=100)
+in_flight = set()  # Protegido por db_lock; SQLite conserva pending al reiniciar.
 
 
 # ============================================================
@@ -208,7 +210,7 @@ def init_db():
     conn.close()
 
 
-def save_packet(data, info):
+def save_packet(data, info, fast_path=False):
 
     packet_hash = hashlib.sha256(data).hexdigest()
 
@@ -249,6 +251,14 @@ def save_packet(data, info):
 
             conn.commit()
 
+            if fast_path:
+                in_flight.add(cursor.lastrowid)
+                try:
+                    fast_queue.put_nowait((cursor.lastrowid, data))
+                except queue.Full:
+                    in_flight.discard(cursor.lastrowid)
+                    print("[WARN] fast_queue llena; uplink persistido PENDING")
+
             return (
                 cursor.lastrowid,
                 True,
@@ -286,6 +296,29 @@ def get_pending_packets(limit=10):
         conn.close()
 
     return rows
+
+
+def claim_packet(packet_id):
+    # Revalidar también snapshots tomados antes del fast-path.
+    with db_lock:
+        if packet_id in in_flight:
+            return False
+        conn = sqlite3.connect(DB_PATH)
+        try:
+            row = conn.execute(
+                "SELECT status FROM uplink_queue WHERE id = ?", (packet_id,)
+            ).fetchone()
+        finally:
+            conn.close()
+        if not row or row[0] != "pending":
+            return False
+        in_flight.add(packet_id)
+        return True
+
+
+def release_packet(packet_id):
+    with db_lock:
+        in_flight.discard(packet_id)
 
 
 def mark_attempt(packet_id):
@@ -483,7 +516,7 @@ up_socket.settimeout(
 # ENVIO PUSH CON ACK REAL TTN
 # ============================================================
 
-def send_push_and_wait_ack(data):
+def send_push_and_wait_ack(data, transport=None):
     info = parse_semtech_packet(data)
 
     if not info:
@@ -491,18 +524,20 @@ def send_push_and_wait_ack(data):
 
     expected_token = info["token"]
 
-    with push_lock:
+    # El fast-path tiene socket propio y no espera el backlog/estadisticas.
+    with push_lock if transport is None else threading.Lock():
+        sender = up_socket if transport is None else transport
         try:
-            up_socket.sendto(
-                data,
-                (TTN_HOST, TTN_PORT)
-            )
+            if transport is None:
+                sender.sendto(data, (TTN_HOST, TTN_PORT))
+            else:
+                sender.send(data)  # Socket conectado al destino TTN.
 
             deadline = time.time() + ACK_TIMEOUT
 
             while time.time() < deadline:
                 try:
-                    response, remote = up_socket.recvfrom(
+                    response, remote = sender.recvfrom(
                         65535
                     )
 
@@ -532,8 +567,33 @@ def send_push_and_wait_ack(data):
             return False
 
 # ============================================================
-# WORKER DE ESTADISTICAS (SIN PERSISTENCIA)
+# WORKERS INMEDIATO Y DE ESTADISTICAS
 # ============================================================
+
+def fast_worker():
+    while running:
+        try:
+            packet_id, data = fast_queue.get(timeout=1.0)
+        except queue.Empty:
+            continue
+        try:
+            mark_attempt(packet_id)
+            # Socket por intento: no comparte ACK ni locks con otros workers.
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as transport:
+                transport.settimeout(ACK_TIMEOUT)
+                transport.connect((TTN_HOST, TTN_PORT))
+                ack_ok = send_push_and_wait_ack(data, transport=transport)
+            if ack_ok:
+                mark_sent(packet_id)
+                print(f"[FAST ACK] id={packet_id} -> SENT (ACK UDP)")
+            else:
+                print(f"[FAST NO ACK] id={packet_id} -> PENDING")
+        except Exception as e:
+            print(f"[WARN] fast_worker id={packet_id}: {e}; PENDING")
+        finally:
+            release_packet(packet_id)
+            fast_queue.task_done()
+
 
 def stat_worker():
     while running:
@@ -593,7 +653,8 @@ def local_receiver():
 
                     packet_id, inserted, original_time = save_packet(
                         data,
-                        info
+                        info,
+                        fast_path=True
                     )
 
                     ack = build_push_ack(data)
@@ -791,51 +852,58 @@ def queue_worker():
                 original_time
             ) in packets:
 
-                if original_time is None:
-                    original_time = utc_epoch()
+                if not claim_packet(packet_id):
+                    continue
 
-                packet_to_send = inject_original_time(
-                    raw_packet,
-                    original_time
-                )
+                try:
+                    if original_time is None:
+                        original_time = utc_epoch()
 
-                mark_attempt(packet_id)
-
-                print(
-                    f"[TX] id={packet_id} "
-                    f"time_original={original_time} "
-                    f"intento={attempts + 1} -> TTN"
-                )
-
-                ack_ok = send_push_and_wait_ack(
-                    packet_to_send
-                )
-
-                if ack_ok:
-
-                    mark_sent(packet_id)
-
-                    delay = max(
-                        0,
-                        utc_epoch() - int(original_time)
+                    packet_to_send = inject_original_time(
+                        raw_packet,
+                        original_time
                     )
+
+                    mark_attempt(packet_id)
 
                     print(
-                        f"[ACK] id={packet_id} -> SENT "
-                        f"| original_time={original_time} "
-                        f"| delay={delay}s"
+                        f"[TX] id={packet_id} "
+                        f"time_original={original_time} "
+                        f"intento={attempts + 1} -> TTN"
                     )
 
-                else:
-
-                    print(
-                        f"[NO ACK] id={packet_id} "
-                        f"permanece PENDING "
-                        f"| reintento en 60s"
+                    ack_ok = send_push_and_wait_ack(
+                        packet_to_send
                     )
 
-                    failed = True
-                    break
+                    if ack_ok:
+
+                        mark_sent(packet_id)
+
+                        delay = max(
+                            0,
+                            utc_epoch() - int(original_time)
+                        )
+
+                        print(
+                            f"[ACK] id={packet_id} -> SENT "
+                            f"| original_time={original_time} "
+                            f"| delay={delay}s"
+                        )
+
+                    else:
+
+                        print(
+                            f"[NO ACK] id={packet_id} "
+                            f"permanece PENDING "
+                            f"| reintento en 60s"
+                        )
+
+                        failed = True
+                        break
+
+                finally:
+                    release_packet(packet_id)
 
                 time.sleep(0.10)
 
@@ -1065,6 +1133,11 @@ def main():
 
         threading.Thread(
             target=queue_worker,
+            daemon=True
+        ),
+
+        threading.Thread(
+            target=fast_worker,
             daemon=True
         ),
 

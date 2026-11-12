@@ -136,3 +136,17 @@ python -m unittest discover -s tests -v
 ```
 
 Las pruebas cargan solo definiciones de funciones mediante AST, con sockets y envío simulados: no importan el módulo completo, no abren UDP ni tocan SQLite/TTN. Cubren ACK remoto retenido con PULL_DATA/TX_ACK posteriores, saturación, resultados/error de envío y prioridad de rxpk en datagramas mixtos. No sustituyen pruebas de red ni temporización real en Raspberry.
+
+
+## PROMPT 005: fast-path de uplinks (PC, 2026-11-11)
+
+CORREGIDO en PC: rxpk se persiste antes del ACK local y se reserva bajo db_lock para fast_worker. Este worker despierta al recibir trabajo, envia el datagrama original por un socket conectado independiente y solo marca sent tras PUSH_ACK con token coincidente. sent acredita ACK UDP, no aceptacion LoRaWAN ni entrega a integraciones. Sin ACK/error, libera la reserva y conserva pending para queue_worker. No hay cambio de esquema ni estado sending persistente; tras reiniciar, los registros pendientes siguen recuperables.
+
+fast_queue admite 100 entradas; si se llena, el uplink permanece en SQLite para reintento. La reserva excluye envios simultaneos; no garantiza entrega unica cuando TTN recibe pero se pierde el ACK. El worker inmediato serializa sus propios intentos: bajo carga o fallos puede existir espera entre uplinks. SQLite sigue en el receptor compartido; ausencia total de bloqueo y latencia cercana a cero requieren medicion operacional. Se mantienen politica de reintentos existente y dos definiciones historicas de get_original_time_from_rxpk (activa la segunda, fallback UTC local si diferencia >10 s).
+
+CORREGIDO: los reintentos envian raw_packet intacto, sin inject_original_time; se preservan tmst y los distintos rxpk.time del datagrama. original_time conserva su calculo historico y no acredita siempre hora RF. Downstream y configuracion conservados. CONFIRMADO: py_compile y 12 pruebas aisladas con SQLite temporal y transporte simulado. PENDIENTE: Raspberry, TTN, OTAA, corte/restauracion de Internet y reinicio real. SSH rechazo autenticacion; no se desplego ni se ejecuto Git add/commit/push. Ver BITACORA.md, PROMPT 005.
+
+
+### PROMPT 005: revision posterior
+
+CORREGIDO: esta revision sustituye la afirmacion anterior de que ambas rutas envian bytes intactos. Solo fast_worker envia el datagrama original; queue_worker restaura inject_original_time(raw_packet, original_time) antes del envio. La DB conserva raw_packet y original_time sin modificarlos; el datagrama de reintento conserva tmst y asigna rxpk.time=original_time en ISO UTC a todos los rxpk. Se mantiene el fallback local historico de original_time, por lo que no siempre representa hora RF validada. Si fast_queue se llena, el uplink queda pending durable, pero un OTAA puede perder su ventana RX. CONFIRMADO: compilacion y 15 pruebas locales; operacion RF/TTN PENDIENTE.

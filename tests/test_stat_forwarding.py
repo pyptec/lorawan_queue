@@ -128,7 +128,7 @@ class StatForwardingTests(unittest.TestCase):
         data = packet(0, {"rxpk": [{"data": "AA=="}], "stat": {}})
         ns["local_socket"] = ReceiverSocket(ns, [data])
         ns["send_push_and_wait_ack"] = Mock()
-        ns["save_packet"].side_effect = lambda *args: (
+        ns["save_packet"].side_effect = lambda *args, **kwargs: (
             self.assertEqual(ns["local_socket"].sendto.call_count, 0) or (1, True, 123))
         ns["local_receiver"]()
         ns["save_packet"].assert_called_once()

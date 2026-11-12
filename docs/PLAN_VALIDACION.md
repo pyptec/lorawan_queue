@@ -66,3 +66,15 @@ CONFIRMADO en PC: py_compile código 0; cuatro pruebas unittest correctas. Tests
 4. Paquete mixto rxpk+stat conserva save_packet antes del ACK y no entra a stat_queue.
 
 CONFIRMADO por AST contra HEAD previo: local_receiver no contiene llamada a send_push_and_wait_ack, stat_worker registrado en main; funciones existentes salvo receptor/main sin cambios. No se prueban transporte real, temporización RX1/RX2 o entrega a TTN. PENDIENTE en una fase autorizada: comprobar en Raspberry tráfico de control durante silencio de TTN y saturación de estadísticas, latencia de SQLite y backlog. No se activa lorawan-queue.service ni se corta Internet en este prompt.
+
+
+## PROMPT 005: validacion local del fast-path (2026-11-11)
+
+CONFIRMADO: python -m py_compile lorawan_queue.py; python -B -m unittest discover -s tests -v: 12 pruebas correctas (8 nuevas, 4 existentes). SQLite temporal y sockets simulados, funciones cargadas por AST sin importar el proxy ni tocar DB de produccion. Cubren reserva/deduplicacion, ACK con token/tipo correcto, fallo/excepcion, reintento intacto con multiples rxpk, simulacion de reinicio, saturacion y paso de PULL_DATA/TX_ACK durante espera activa. La simulacion de reinicio no es un reinicio del servicio/sistema.
+
+PENDIENTE: pruebas operacionales 1 online, 2 OTAA, 3 corte/restauracion y 4 reinicio del servicio/reboot pedidas por el usuario, despues de revision del diff y autorizacion de commit/push. Conservar los comandos de despliegue del prompt como sugeridos NO ejecutados. Medir RF, tmst, recepcion, envio, ACK, PULL_RESP y contador actual del concentrador; correlacionar TTN/aplicacion y TX_ACK, no deducir entrega de PUSH_ACK. La evidencia OTAA recibida del usuario no fue observada directamente; no cierra las fases 2/3 ni prueba causalidad del rechazo JIT. El intento SSH termino Permission denied antes de ejecutar comandos remotos.
+
+
+### PROMPT 005: revision posterior de pruebas
+
+CONFIRMADO: py_compile codigo 0 y 15 pruebas OK (1.402 s). La prueba de reintento se actualiza para comprobar reconstruccion de rxpk.time desde original_time, preservacion de cada tmst/cabecera/demas campos y raw_packet/metadata SQLite intactos. Tres pruebas adicionales verifican queue_worker omitiendo in_flight, fast_worker con parser real y ACK valido tras token/tipo incorrectos, y socket.timeout sin mark_sent. Transporte simulado y SQLite temporal: no equivalen a pruebas operacionales. Comparacion AST confirma fast_worker intacto frente al diff anterior y esquema/downstream/injector/ambas definiciones de tiempo intactos frente a HEAD. Saturacion preserva el uplink, no su ventana OTAA. Despliegue y medicion real PENDIENTES.

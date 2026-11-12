@@ -69,3 +69,17 @@ Las observaciones anteriores describen el código base y las revisiones históri
 stat_worker, iniciado como daemon junto a local_receiver, downstream_receiver y queue_worker, espera por la cola con timeout y llama a la función de envío/ACK existente. Usa task_done en finally incluso ante excepciones. No hay SQLite ni persistencia de estadísticas, ni reintento propio tras fallo. up_socket/push_lock permanecen compartidos con queue_worker; solo los workers pueden esperar ese ACK/lock, no el receptor por esta rama.
 
 CONFIRMADO en comparación AST: salvo local_receiver y main, todas las funciones existentes mantienen su estructura, incluida persistencia y downstream_receiver. PULL_DATA/TX_ACK no pasan por stat_queue y PULL_ACK/PULL_RESP siguen directos. Paquetes mixtos rxpk+stat conservan prioridad de rxpk. Persistencia de uplinks y latencia por backlog/idle permanecen sin corregir en este prompt; operación y tiempos reales PENDIENTES.
+
+
+## PROMPT 005: ruta inmediata y reserva (2026-11-11)
+
+CORREGIDO en PC respecto a los antecedentes: local_receiver/rxpk -> save_packet/commit pending -> reserva in_flight + fast_queue bajo db_lock -> ACK local. fast_worker -> mark_attempt -> socket propio conectado -> envio de bytes originales -> PUSH_ACK/token -> mark_sent; sin ACK o excepcion conserva pending. finally libera reserva. Cola inmediata acotada a 100; saturacion conserva pending y libera reserva para queue_worker. La publicacion en memoria ocurre despues del commit; reiniciar pierde solo reservas/avisos, no el registro SQLite.
+
+queue_worker revalida pending y reclama bajo el mismo db_lock antes de enviar; evita tanto concurrencia como reenvio por snapshots anteriores ya enviados. No mantiene db_lock durante espera de ACK. Su socket/push_lock compartido con stat_worker no afecta al socket inmediato. Downstream sin cambios funcionales. Una reserva es exclusion dentro del proceso, no garantia exactly-once ante ACK perdido o reinicio tras envio. No se agrega failed, agotamiento ni otra politica de reintentos.
+
+Ambas rutas envian raw_packet sin modificar tmst ni rxpk.time; se deja inject_original_time definido sin uso y ambas definiciones get_original_time_from_rxpk intactas. La segunda sigue activa: usa solo el primer rxpk y fallback local si diferencia >10 s. sent_at y ack_at conservan la misma hora de confirmacion; delay_seconds conserva precision entera y fuente historica de original_time. No se mide aqui el instante exacto sendto ni la hora RF por rxpk. SQLite en receptor y serializacion de intentos inmediatos siguen siendo limites temporales PENDIENTES de medicion.
+
+
+### PROMPT 005: revision posterior de trazabilidad temporal
+
+CORREGIDO respecto al texto anterior: fast_worker mantiene raw_packet intacto; queue_worker reconstruye exclusivamente el datagrama de salida mediante inject_original_time(raw_packet, original_time). Conserva tmst, cabecera y demas campos; asigna la misma hora ISO UTC a todos los rxpk. Los bytes y tiempos almacenados en SQLite no cambian. No reconstruye ventanas RX historicas ni acredita aceptacion de reenvios antiguos por TTN. La funcion y sus limitaciones previas se conservan sin refactorizacion. Saturacion de fast_queue: pending durable y reserva liberada; la ventana de un JoinAccept puede expirar antes del reintento.
