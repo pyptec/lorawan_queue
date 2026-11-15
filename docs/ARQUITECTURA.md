@@ -83,3 +83,31 @@ Ambas rutas envian raw_packet sin modificar tmst ni rxpk.time; se deja inject_or
 ### PROMPT 005: revision posterior de trazabilidad temporal
 
 CORREGIDO respecto al texto anterior: fast_worker mantiene raw_packet intacto; queue_worker reconstruye exclusivamente el datagrama de salida mediante inject_original_time(raw_packet, original_time). Conserva tmst, cabecera y demas campos; asigna la misma hora ISO UTC a todos los rxpk. Los bytes y tiempos almacenados en SQLite no cambian. No reconstruye ventanas RX historicas ni acredita aceptacion de reenvios antiguos por TTN. La funcion y sus limitaciones previas se conservan sin refactorizacion. Saturacion de fast_queue: pending durable y reserva liberada; la ventana de un JoinAccept puede expirar antes del reintento.
+
+
+## PROMPT 006 — Dashboard SAMEE LoRaWAN Gateway (2026-11-15)
+
+Implementación local autorizada expresamente; no cierra las fases operacionales anteriores, que permanecen PENDIENTES. No se modifica lorawan_queue.py ni la base existente.
+
+Arquitectura: proceso FastAPI separado -> muestreador compartido (pausa 5 s después de cada muestra) -> API y WebSocket (2 s). SQLite URI mode=ro y query_only, timeout de bloqueo 20 ms, presupuesto VM 80 ms, últimos 100 registros. El agregado histórico puede agotar el presupuesto: estado UNKNOWN, sin índices ni migraciones nuevos. No se usa immutable porque la base cambia. Lecturas aún pueden competir por I/O/locks; medir impacto real PENDIENTE. No se crea gateway_events.
+
+Archivos: dashboard/app.py, queue_monitor.py, system_monitor.py, gateway_monitor.py, device_decoder.py, templates/index.html y static locales; deploy/dashboard.service; requirements.txt y requirements-dev.txt; tests/test_dashboard.py.
+
+API GET: /api/status, /api/system, /api/queue, /api/devices, /api/gateway, /api/services. WS /ws/status comparte caché, limita envío lento y rechaza origen web distinto al host. Cuatro vistas: resumen, dispositivos, cola con marcas disponibles y sistema. No sirve BLOB, token Semtech ni payload de aplicación. Usa textContent para datos externos.
+
+Fuentes: CPU/RAM/disco/uptime/frecuencia/interfaces psutil; temperatura sysfs Linux; servicios systemctl show con timeout; Internet TCP a 1.1.1.1:443 y resolvectl query del host TTN (aproximación, no universal; sin resolvectl DNS UNKNOWN). TTN usa último ack_at: ONLINE hasta 120 s, luego DEGRADED; falta de ACK no demuestra OFFLINE. PUSH_ACK no acredita entrega final; PULL_ACK no disponible. RAK/SPI/GPS UNKNOWN; AU915 FSB1 solo declarado, no verificado. No se consultan logs crudos ni secretos. Sent/ACK comparten marca histórica; fast-send/commit exacto no registrados. Original_time puede ser fallback local, no siempre hora RF. No se estima autonomía sin historial.
+
+Dispositivos: ventana de 100 datagramas, hasta 64 rxpk por datagrama; extracción local de DevAddr/DevEUI, FCnt16, FPort y metadatos RF. DevAddr no identifica permanentemente; no hay asociación verificada a LILYGO/Dragino/QALCOSONIC ni claves/decoder de aplicación local, por lo que valores son NO DISPONIBLES.
+
+Ejecución local sugerida (NO ejecutada como servidor LAN): `python -m pip install -r requirements.txt`; configurar DASHBOARD_DB_PATH hacia base autorizada; `python -m uvicorn dashboard.app:app --host 127.0.0.1 --port 8080 --workers 1`. Abrir http://127.0.0.1:8080. Sin base muestra UNKNOWN y no la crea. Dependencias dev: `python -m pip install -r requirements-dev.txt`. Tests: `python -m unittest discover -s tests -v`.
+
+Raspberry PENDIENTE: después de revisión, aprobación de Jaime, commit/push PC y pull Raspberry; revisar puerto 8080 (antecedente de otro receptor), intérprete/usuario/rutas, acceso de lectura DB y journal, firewall LAN y systemd-analyze verify. Unidad preparada, NO instalada. Binding 0.0.0.0 sin autenticación requiere LAN confiable y firewall; no publicar en Internet. GPS/identidades y medición RF precisan fuentes validadas. Validar CPU/I/O, cola bajo backlog, online/offline/recuperación y WebSocket real en navegador. No probar corte ni reinicio ahora.
+
+
+## PROMPT 007 — Correcciones de aislamiento y evidencia
+
+CORREGIDO: cuatro tareas de muestreo independientes publican en la misma caché del proceso ASGI: sistema 5 s, SQLite 10 s, servicios e Internet 15 s (intervalo posterior a lectura). Solo un worker Uvicorn; aumentar workers duplica muestreos. API y WS no consultan SQLite. Cada fuente mantiene `updated_at`. Los errores se aíslan por métrica y fuente; no bloquean al proxy ni eliminan las muestras de otras fuentes. Se añade DNS cancelable sin depender de resolvectl. TTN distingue ONLINE/STALE/UNKNOWN/OFFLINE con las reglas actuales de README.
+
+SQLite mode=ro/query_only, transacción de lectura consistente, timeout 20 ms y presupuesto VM 80 ms; máximo 100 registros y 64 rxpk por datagrama. La conexión se cierra antes de decodificar. No se modifica lorawan_queue.py, no se importan sus sockets, no hay migración ni escritura de aplicación. El agregado histórico aún recorre registros y puede agotar el presupuesto; UNKNOWN explícito. Presupuesto VM no limita estrictamente I/O; medir en Raspberry con backlog antes de afirmar ausencia de impacto. La unidad mantiene filesystem protegido. No usar nolock/immutable para evitar problemas con bases activas; WAL/SHM requieren compatibilidad y permisos de lectura durante despliegue.
+
+DB operacional exclusivamente en Raspberry; no se copia a PC ni a Git. Las fixtures son ficticias y temporales fuera del repositorio. GPS, hardware y decoders de aplicación quedan para FASE 2 del dashboard; no se identifica un modelo a partir de DevAddr sin registro validado. La vista informa UNKNOWN DEVICE y FCnt de 16 bits, no reconstruye el contador completo.

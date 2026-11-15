@@ -1,0 +1,20 @@
+[Unit]
+Description=SAMEE LoRaWAN Gateway Dashboard (read only)
+After=network.target lorawan-queue.service
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/lorawan_queue
+Environment=PYTHONUNBUFFERED=1
+Environment=DASHBOARD_DB_PATH=/home/pi/lorawan_queue/lorawan_queue.db
+ExecStart=/home/pi/lorawan_queue/.venv/bin/uvicorn dashboard.app:app --host 0.0.0.0 --port 8080 --workers 1
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -202,3 +202,94 @@ PENDIENTES: revision/aprobacion explicita antes de git add/commit/push; comandos
 ESTADO: CORREGIDO y CONFIRMADO en PC; validacion operacional PENDIENTE. No se borro contenido anterior, no se agrego otro PROMPT ni otra bitacora y no se ejecuto add/commit/push.
 
 CONFIRMADO en revision final posterior: git diff --check codigo 0 tras actualizar documentos; git status conserva seis archivos modificados y tests/test_fast_path.py sin seguimiento, sin staging. Ejecutados y mostrados git --no-pager diff -- lorawan_queue.py tests/test_stat_forwarding.py y Get-Content -Encoding UTF8 del test completo. Artefacto .git/fast-path-review.diff actualizado con los siete archivos; no se realizaron cambios remotos.
+
+
+## PROMPT 006 — Dashboard SAMEE LoRaWAN Gateway
+### ROL
+Ingeniero senior Python/FastAPI/WebSocket/Linux/Raspberry/LoRaWAN/SQLite/systemd/Git; desarrollo en PC.
+### TAREA
+Solicitud adjunta: implementar fase 1 de supervisión local de solo lectura con cuatro vistas, API, WebSocket, métricas evidenciables y tests; preservar fast-path, sin despliegue ni add/commit/push antes de revisión de Jaime.
+### FORMATO
+Once secciones de entrega solicitadas y campos permanentes de trazabilidad.
+### EVIDENCIA
+CONFIRMADO: árbol main limpio; git pull: Already up to date. Código y esquema declarados revisados. No hay DB local; esquema operacional, hardware y TTN actuales PENDIENTES. Antecedentes OTAA/FAST ACK aportados por usuario, no medidos en esta intervención. Documentadas fases anteriores PENDIENTES antes de preparar dashboard por autorización explícita actual.
+### ARCHIVOS CONSULTADOS
+Adjunto Pasted text.txt, AGENTS.md, lorawan_queue.py, README.md, BITACORA.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, .gitignore, tests/test_fast_path.py; listado del repositorio y dependencias Python.
+### ARCHIVOS MODIFICADOS
+Nuevos: dashboard/ (Python, HTML, CSS, JS), requirements.txt, requirements-dev.txt, deploy/dashboard.service, tests/test_dashboard.py. Ampliados: README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, BITACORA.md. Cola, configuración RF, servicios previos y AGENTS.md intactos.
+### COMANDOS EJECUTADOS
+Get-Content de adjunto, reglas, código y documentos; Get-Location; rg --files; git status --short --branch; git status --porcelain; git pull; python --version; python -m pip show fastapi uvicorn psutil httpx websockets; Get-ChildItem -Force -Name; git --no-pager diff --stat; Get-Content tests/test_fast_path.py -TotalCount 40. Scripts Python desde stdin para crear archivos y ampliar documentación en PC; python -m pip install -r requirements-dev.txt. Validaciones y resultados se añaden tras observarlos.
+### RESULTADO
+Implementación desacoplada: muestreo compartido, consultas SQLite mode=ro/query_only acotadas, APIs GET y WS, frontend local sin CDN. No gateway_events; no cambios al fast-path. Métricas desconocidas explícitas, sin inventar GPS/RF/decoder ni entrega final. Ver arquitectura y límites en documentación PROMPT 006.
+### VALIDACIÓN
+PENDIENTE ejecución de compilación, pruebas, diff y revisión local.
+### PENDIENTES
+Revisión de Jaime antes de add/commit/push; despliegue y pruebas operacionales Raspberry no autorizados en esta intervención. Comandos de arranque LAN, systemd-analyze, instalación unidad, pull Raspberry, reinicios y pruebas A-E sugeridos NO ejecutados.
+### ESTADO
+PENDIENTE validación local; sin despliegue.
+
+### Validación local inicial
+CONFIRMADO: py_compile de siete archivos nuevos código 0; 24 pruebas OK (1.936 s), nueve nuevas y quince previas. Aviso Starlette/httpx observado con rangos iniciales amplios; CORREGIDO limitando FastAPI <0.116, Uvicorn <0.35 y websockets <16 para evitar incorporar cambios mayores no requeridos. Se reinstalan y repiten pruebas. Pip inicial instaló dependencias en el intérprete PC existente, no en Raspberry.
+
+### Validación final local de PROMPT 006
+CONFIRMADO: recompilación de dashboard/__init__.py, app.py, queue_monitor.py, system_monitor.py, gateway_monitor.py, device_decoder.py y tests/test_dashboard.py; 24 pruebas OK (2.051 s), sin aviso anterior. Dependencias finales instaladas: FastAPI 0.115.14, Uvicorn 0.34.3, psutil 7.2.2, websockets 15.0.1, httpx 0.28.1. git diff --check código 0; git diff --exit-code -- lorawan_queue.py deploy/lorawan-queue.service AGENTS.md código 0. Advertencias Git LF/CRLF documentales, sin errores de whitespace.
+CONFIRMADO mediante script Python desde stdin: subprocess.Popen de Uvicorn con CREATE_NO_WINDOW, puerto efímero 127.0.0.1, consulta urllib de HTML y seis APIs, CSS/JS HTTP 200, websockets.sync.client recibe dos mensajes reales; DB ausente no creada. Proceso temporal terminado en finally. Sin revisión visual en navegador; sin Raspberry, RF, TTN ni producción. Muestreo Internet real limitado a conectividad del PC durante esta prueba, no del gateway. No acredita latencia del fast-path.
+COMANDOS EJECUTADOS adicionales: python -m pip install -r requirements-dev.txt (segunda instalación); compilación y unittest repetidos; git diff --check; git diff --exit-code de tres archivos protegidos; script de prueba Uvicorn/HTTP/WebSocket y cierre del proceso. A continuación git --no-pager diff, git status y generación de .git/dashboard-review.diff con diff de archivos versionados y git diff --no-index -- NUL para cada nuevo archivo (código 1 esperado por diferencias), sin staging. Artefacto local administrativo para revisión, no otra bitácora.
+ESTADO: CONFIRMADO implementación y pruebas locales. PENDIENTE revisión visual, fuentes RF/GPS/identidad, esquema operativo y carga/locks Raspberry. LISTO PARA REVISIÓN del alcance local; no acredita operación del gateway. Sin git add, commit, push ni despliegue.
+
+
+## PROMPT 007 — Revisión final Dashboard SAMEE LoRaWAN Gateway
+### FECHA
+2026-11-15, America/Bogota.
+### ROL
+Ingeniero senior Python/FastAPI/SQLite/Linux/Raspberry/LoRaWAN/RAK5146/systemd/redes/Git.
+### CONTEXTO
+PROMPT 006 local pendiente de revisión; main con cambios sin staging. No se ejecuta pull sobre el árbol modificado ni se conecta a Raspberry. Se conserva PROMPT 001 a PROMPT 006 íntegro.
+### TAREA
+Revisar código, compatibilidad, robustez, solo lectura, datos no versionables, visual y pruebas; corregir defectos demostrados en PC antes de autorizar commit. Solicitud recibida en adjunto Pasted text.txt.
+### REGLAS
+lorawan_queue.db no se almacena en PC.
+lorawan_queue.db no se versiona.
+Las pruebas usan SQLite temporal, mocks o fixtures ficticias.
+La DB operacional vive únicamente en Raspberry.
+Sin add/commit/push ni despliegue, sin modificar lorawan_queue.py ni configuración RF; dashboard solo lectura, sin secretos ni métricas inventadas.
+### FORMATO
+Quince secciones solicitadas y campos permanentes de AGENTS.md.
+### ARCHIVOS REVISADOS
+Todos los dashboard/*.py, templates/index.html, static/css/style.css, static/js/dashboard.js; deploy/dashboard.service y lorawan-queue.service; requirements.txt y requirements-dev.txt; tests/test_dashboard.py y contexto de pruebas previas; README.md, AGENTS.md, BITACORA.md, docs/ARQUITECTURA.md, PLAN_VALIDACION.md, FUENTES.md, antecedentes README_PREVIO.md; .gitignore, estado/listados Git. No se inspecciona ni copia producción.
+### ARCHIVOS CONSULTADOS
+Los indicados en ARCHIVOS REVISADOS y nuevo adjunto del usuario. Estado real accesible: PC y sus fixtures; Raspberry PENDIENTE.
+### HALLAZGOS
+IMPORTANTE/CONFIRMADO reproducido: JSON raíz [] provoca AttributeError; fallo cpu_freq provoca OSError global; systemctl sin ActiveState se mostraba OFFLINE. Red/servicios secuenciales retrasaban todas las muestras; no había fallback DNS. TTN no combinaba red y ACK ni distinguía STALE. Faltaba *.db-journal. Revisión visual inicial detectó desbordamiento móvil en Cola. Ningún fallo crítico demostrado en el proxy.
+### CORRECCIONES
+Muestreos independientes, tolerancia por fuente/métrica, DNS en proceso cancelable, timeouts cortos, propiedades systemd UNKNOWN, TTN con estados y límites explícitos. SQLite libera read-lock antes de decodificar y filtra BLOB sobredimensionado en SQL; transacción consistente. Decoder tolera JSON no objeto y constantes no finitas, etiqueta UNKNOWN DEVICE. Interfaz tolera datos ausentes, distingue colores de estado y ajusta resumen de cola en móvil. Gitignore incluye journal sin duplicar *.db.
+ERROR intermedio en nueva prueba: wrapper connect(uri, uri=True) colisionaba por nombre del parámetro; CORREGIDO a database. Se añadió cierre explícito de conexiones de fixtures mediante contextlib.closing. La primera modificación de gitignore concatenó la regla con *.pyc por falta de newline final; ERROR detectado con check-ignore y CORREGIDO antes de entrega. Primera revisión visual abortó por overflow móvil; CORREGIDO y se repite. No se ocultan resultados intermedios.
+### ARCHIVOS MODIFICADOS
+.gitignore; dashboard/app.py, system_monitor.py, gateway_monitor.py, queue_monitor.py, device_decoder.py, static/js/dashboard.js, static/css/style.css; tests/test_dashboard.py; README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, BITACORA.md. Unidad, requirements, HTML, proxy y AGENTS.md conservados. Artefactos locales .git/dashboard-review-007 fuera del contenido versionable.
+### COMANDOS EJECUTADOS
+Get-Content del adjunto y archivos indicados; git status --short --branch; git status --short --ignored; rg --files --hidden excluyendo .git y cache; git check-ignore -v con nombres DB/journal/WAL/SHM; git ls-files; git rev-list --all --objects (filtrado por extensiones DB); Get-ChildItem -Recurse -Force -File -Include *.db,*.db-journal,*.db-wal,*.db-shm,*.log; Get-Command node,msedge,chrome; Test-Path Chrome/Edge; python -m pip show playwright; python -m pip install playwright solo herramienta PC; scripts Python desde stdin para reproducir defectos, modificar archivos y documentar; py_compile de siete archivos; unittest; node --check dashboard/static/js/dashboard.js; python .git/dashboard-review-007/visual_check.py (fixture temporal, Uvicorn loopback, Chrome headless; servidor terminado en finally). Resultados finales se añaden tras observarlos.
+### EVIDENCIA
+CONFIRMADO en ejecución intermedia corregida: 33 pruebas OK (2.963 s). Verificaciones Git no encontraron bases versionadas ni en historial accesible; exploración recursiva sin DB ni logs de producción en repositorio. Caches Python ignoradas y artefactos administrativos en .git no son contenido de commit. No se afirma inexistencia de secretos en ubicaciones externas/historial no accesible.
+### VALIDACIONES
+PENDIENTE cierre visual repetido, compilación/pruebas finales, comprobación final de ignore, datos residuales, diff y preservación histórica.
+### VALIDACIÓN
+Resultados finales registrados después de ejecutar comprobaciones; pruebas locales no equivalen a validación operacional.
+### RESULTADO
+CORREGIDO hallazgos demostrados en PC; sin cambios al proxy ni escrituras de aplicación del dashboard. Estado final depende de validación posterior.
+### PENDIENTES
+Revisión/aprobación de Jaime para add/commit/push. Después: puerto 8080, pull Raspberry, verificar DB real/esquema, comparar conteos, instalar dashboard.service, systemd, permisos/auxiliares WAL, carga/locks y latencia, pérdida Internet, recuperación y reboot. GPS/RF y decoders/registro de dispositivos FASE 2.
+### LIMITACIONES
+Sin Raspberry, RF o TTN reales. ACK UDP no acredita entrega final. Internet OFFLINE/TTN OFFLINE son resultados/inferencias de pruebas limitadas, no certeza de caída universal. Presupuesto VM no garantiza límite de I/O ni ausencia de contención; medir antes de desplegar. WAL/SHM tienen requisitos internos SQLite: mantener filesystem protegido, nunca habilitar escritura del dashboard para resolverlos. No se creó ni copió DB operacional.
+### ESTADO
+PENDIENTE comprobaciones finales; sin add/commit/push ni despliegue.
+
+### Validación final de PROMPT 007
+CONFIRMADO: 33 pruebas OK (2.581 s), 18 dashboard y 15 previas; py_compile de siete archivos y node --check sin errores. git diff --check sin errores; diff de lorawan_queue.py, deploy/lorawan-queue.service y AGENTS.md vacío; índice sin staging. Git advierte normalización futura LF/CRLF.
+CONFIRMADO: Chrome headless local, cuatro vistas a 1366x900 y 390x844, once comprobaciones visuales/funcionales y cero errores JavaScript; sin DB no hay HTTP 500 ni fichero creado; fixture temporal íntegra por SHA256; reconexión WebSocket, timeline y servidor operativo tras cerrar navegador. Sin solicitudes externas del navegador. Capturas inspeccionadas de resumen y cuatro vistas móviles; tabla con scroll interno. CPU/RAM/IP corresponden al PC, conectividad simulada OFFLINE y paquetes ficticios: no son evidencia Raspberry. Uvicorn detenido y TemporaryDirectory eliminado. Artefactos administrativos .git/dashboard-review-007 fuera de contenido versionable.
+CONFIRMADO: check-ignore cubre DB/journal/WAL/SHM; git ls-files e historial accesible sin bases; exploración recursiva sin bases ni auxiliares. Residuo externo de la prueba fallida eliminado con Remove-Item -LiteralPath de queue.db y su carpeta vacía, tras verificar ruta exacta tmpjgr75mxz dentro de Temp y contenido esperado; sin borrado recursivo. Pruebas finales sin bases residuales.
+CONFIRMADO: PROMPT 001-006 íntegros por comparación del prefijo con HEAD más adiciones reconstruidas del diff previo .git/dashboard-review.diff, que se conserva intacto. Escaneo de claves privadas y credenciales literales de entregables sin coincidencias; no prueba ubicaciones externas ni historial inaccesible.
+ERROR administrativo intermedio: generador de diff no contemplaba archivo nuevo vacío (__init__.py) y terminó con StopIteration antes de escribir bitácora o artefactos. CORREGIDO usando cabecera diff --git para resolver nombre; no afectó código del dashboard.
+COMANDOS EJECUTADOS adicionales: compilación/pruebas/node --check/diff --check repetidos; git diff --cached --exit-code; diff --exit-code de archivos protegidos; check-ignore, ls-files filtrado, Get-ChildItem recursivo y git status; visual_check.py repetido; view_image de capturas; script de comparación histórica/escaneo y generación de full.diff y changes-from-006.diff mediante git diff y git diff --no-index -- NUL (código 1 esperado por diferencias). git --no-pager diff ejecutado y mostrado. Solo PC.
+RESULTADO: CORREGIDO y CONFIRMADO el alcance local; sin errores críticos o importantes conocidos pendientes en código revisado. LISTO PARA COMMIT sujeto a aprobación de Jaime. No acredita despliegue.
+PENDIENTES: puerto 8080, pull Raspberry, DB/esquema reales y conteos, instalación dashboard.service, Python/ARM, systemd y permisos WAL; medición de carga/locks/fast-path, pérdida Internet, recuperación y reboot. FASE 2 RF/GPS/dispositivos/decoders. Comandos remotos del plan sugeridos NO ejecutados.
+ESTADO: CORREGIDO y CONFIRMADO en PC; validación operacional PENDIENTE. Sin git add/commit/push ni modificaciones remotas.
