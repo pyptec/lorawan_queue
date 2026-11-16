@@ -1085,3 +1085,79 @@ NINGUNO
 
 OBSERVACIONES:
 No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+### Continuación de evidencia PC — PROMPT 010
+
+## TAREA 010.14 — REVISIÓN PRE-COMMIT (actualización)
+
+OBJETIVO:
+Concluir revisión antes del staging.
+
+ACCIÓN:
+Script Python verificó lista exacta git diff --name-only, sustitución única contra HEAD, pin único, prefijo binario histórico y los siete campos en las 30 tareas; git diff --check.
+
+EVIDENCIA:
+CONFIRMADO revisión pre-commit: tres archivos; diff código exacto; 30 tareas completas; prefijo histórico intacto. Whitespace sin errores; advertencia LF/CRLF documental.
+
+RESULTADO:
+Revisión completada antes del commit.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Únicamente dashboard/ups_monitor.py, requirements.txt y BITACORA.md.
+
+## TAREA 010.15 — STAGING Y COMMIT (actualización)
+
+OBJETIVO:
+Crear commit trazable.
+
+ACCIÓN:
+git add -- dashboard/ups_monitor.py requirements.txt BITACORA.md; git diff --cached --stat; git commit -m "Fix UPS monitoring to use smbus2".
+
+EVIDENCIA:
+6e3329d Fix UPS monitoring to use smbus2; 3 files changed, 708 insertions(+), 1 deletion(-): bitácora 706 líneas añadidas, monitor 1 sustitución y requirements 1 línea añadida.
+
+RESULTADO:
+Commit creado en PC.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Los tres archivos anteriores.
+
+OBSERVACIONES:
+Sin cambios de tests/frontend/LoRaWAN; no se versionaron datos ni artefactos .git.
+
+## TAREA 010.16 — PUSH (actualización)
+
+OBJETIVO:
+Publicar corrección en origin/main.
+
+ACCIÓN:
+git push origin main; git status; git log -1 --oneline.
+
+EVIDENCIA:
+76c90f1..6e3329d main -> main; Your branch is up to date with origin/main; nothing to commit, working tree clean; 6e3329d Fix UPS monitoring to use smbus2.
+
+RESULTADO:
+Corrección publicada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional de código.
+
+OBSERVACIONES:
+Esta continuación documental se publica en commit PC separado; su hash y resultado final se informan en la respuesta. Tareas 010.01–010.16 confirmadas en PC, con import Linux/WSL y limitación Windows fcntl explícitas. Tareas 010.17–010.30 pendientes de identidad SSH verificada y validación Raspberry; 010.17 tuvo intento rechazado, no acceso.
+
+COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (aún no ejecutados al escribir este párrafo): git diff --check; git add -- BITACORA.md; git commit -m "Document PC UPS validation and pending Raspberry deployment"; git push origin main; git status; git log -2 --oneline; git diff 76c90f1 HEAD --stat; git ls-remote origin refs/heads/main. Su resultado se presenta con evidencia de herramienta en la respuesta final. No se declara validación Raspberry, hardware, systemd ni operación LoRaWAN.
+
+ESTADO GENERAL: CONFIRMADO EN PC; validación Raspberry PENDIENTE.
+LISTO PARA GIT PULL EN RASPBERRY una vez verificada identidad SSH y estado pre-pull remoto.
