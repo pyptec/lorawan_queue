@@ -31,6 +31,18 @@ class UPSTests(unittest.TestCase):
                 self.assertEqual([c.args for c in bus.read_i2c_block_data.call_args_list], [(0x2D, 0x10, 6), (0x2D, 0x20, 12), (0x2D, 0x30, 8)])
                 bus.close.assert_called_once()
 
+    def test_charge_flag_priority_including_observed_a2(self):
+        # 0xA2 supplied as real hardware evidence; bus readings here are mocks.
+        for flags, expected in ((0x00, "IDLE"), (0x20, "DISCHARGING"),
+                                (0x40, "FAST_CHARGING"), (0x80, "CHARGING"),
+                                (0xA0, "CHARGING"), (0xC0, "FAST_CHARGING"),
+                                (0xE0, "FAST_CHARGING"), (0xA2, "CHARGING")):
+            with self.subTest(flags=hex(flags)):
+                result = self.read(self.bus(flags=flags))
+                self.assertEqual(result["state"], "OK")
+                self.assertEqual(result["charge_state"], expected)
+                self.assertIsNone(result["error"])
+
     def test_signed_fff8_and_positive_boundaries(self):
         for raw, expected in ((0xFFF8, -8), (8, 8), (0x8000, -32768), (0x7FFF, 32767), (0, 0), (0xFFFF, -1)):
             with self.subTest(raw=raw):
@@ -66,13 +78,13 @@ class UPSTests(unittest.TestCase):
         self.assertEqual(self.read(bus)["state"], "UNKNOWN")
         bus.close.assert_called_once()
 
-    def test_short_invalid_and_conflicting_reads(self):
+    def test_short_and_invalid_reads(self):
         for block in ([], [0], [0] * 5, [0] * 7, [0, 0, 0, 0, 0, 256], [0, 0, 0, 0, 0, -1]):
             bus = self.bus()
             bus.read_i2c_block_data.side_effect = None
             bus.read_i2c_block_data.return_value = block
             self.assertEqual(self.read(bus)["state"], "UNKNOWN")
-        for bus in (self.bus(percent=101), self.bus(cells=(0, 3800, 3800, 3800)), self.bus(flags=0xC0), self.bus(vbus=65535)):
+        for bus in (self.bus(percent=101), self.bus(cells=(0, 3800, 3800, 3800)), self.bus(flags=256), self.bus(vbus=65535)):
             self.assertEqual(self.read(bus)["state"], "UNKNOWN")
 
     def test_sampler_timeout_reaps_child(self):

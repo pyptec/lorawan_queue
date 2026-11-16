@@ -1946,3 +1946,1007 @@ RESULTADO: CONFIRMADO corrección mínima y evidencia visual sintética PC; 47 t
 PENDIENTES: identidad SSH 192.168.5.169 pendiente de verificar y autenticación 192.168.2.129 rechazada; no se ejecutó pull/restart/curl/WS/consulta SQLite en Raspberry. Datos reales y no regresión operacional PENDIENTES.
 ESTADO GENERAL: PROMPT 011 — CONFIRMADO EN PC; TAREAS 011.01–011.17 confirmadas; TAREAS 011.18–011.30 pendientes de validación Raspberry.
 LISTO PARA GIT PULL EN RASPBERRY cuando exista acceso verificado y estado remoto apto. No declarar cierre global sin evidencia visual real final.
+
+
+# PROMPT 012 — Interpretación de flags UPS y color del icono (solicitud parcial)
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: Ingeniero senior de software embebido, Raspberry Pi, FastAPI, JavaScript, WebSocket, I2C/SMBus, LoRaWAN, systemd, Git y validación industrial.
+TAREA: TAREA 012.00 — Corregir interpretación de flags y hacer visible el estado de carga con color del icono; pruebas/bitácora/commit/push PC y posterior validación Raspberry.
+FORMATO: revisión preliminar por tareas; implementación PENDIENTE de completar solicitud.
+PROMPT RECIBIDO: termina dentro de bloque bash tras curl -s http://127.0.0.1:8080/api/ups; sin respuesta JSON, valores crudos de flags ni reglas de prioridad/colores. Usuario aporta detección I2C 0x2d en Raspberry; no verificada directamente en esta intervención. Se solicitó el resto del mensaje mediante pregunta asíncrona.
+EVIDENCIA: git status limpio, main, HEAD 9f68332 Document UPS frontend validation; origen sincronizado según refs locales. Lectura del código: ups_monitor.py toma flags de 0x02; selecciona 0x40 FAST_CHARGING, 0x80 CHARGING, 0x20 DISCHARGING; si más de un bit está activo devuelve UNKNOWN por ValueError. Esto demuestra comportamiento actual, no que una combinación sea válida o inválida para el hardware. KPI usa charge_state para elegir símbolo batería/rayo, pero color se deriva de battery_state.
+ARCHIVOS CONSULTADOS: AGENTS.md, dashboard/ups_monitor.py, dashboard/static/js/dashboard.js y dashboard/static/css/style.css (búsquedas dirigidas), tests/test_ups_monitor.py y tests/test_ups_frontend.py (búsquedas), BITACORA.md (final).
+ARCHIVOS MODIFICADOS: BITACORA.md únicamente.
+COMANDOS EJECUTADOS: git status; git branch --show-current; git log -2 --oneline; Get-Content AGENTS.md, dashboard/ups_monitor.py y final de BITACORA.md; rg -n de charge_state/battery-charging/estilos KPI/upsValue en JS/CSS/tests; script Python append de este registro y verificación de prefijo; git diff --check y git status --short previstos inmediatamente después del append.
+DECISIÓN: no inferir nueva semántica de flags, prioridad ni colores a partir de solicitud cortada. No modificar implementación ni desplegar hasta recibir la continuación necesaria.
+
+## TAREA 012.01 — ESTADO INICIAL
+
+OBJETIVO:
+Revisar estado del repositorio.
+
+ACCIÓN:
+Consultar estado, rama y commits recientes.
+
+EVIDENCIA:
+main; HEAD 9f68332; working tree clean antes de esta nota.
+
+RESULTADO:
+Estado inicial revisado.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO de código.
+
+OBSERVACIONES:
+Solo documentación local posterior de esta intervención.
+
+## TAREA 012.02 — REVISIÓN DE FLAGS Y COLOR ACTUALES
+
+OBJETIVO:
+Identificar lógica existente sin inventar corrección.
+
+ACCIÓN:
+Leer monitor y buscar presentación charge_state/battery_state y estilos de icono.
+
+EVIDENCIA:
+Rechazo de flags simultáneos; color KPI dependiente de battery_state; símbolo dependiente de charge_state.
+
+RESULTADO:
+Comportamiento actual identificado; interpretación correcta y colores esperados aún no proporcionados en mensaje completo.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+BITACORA.md.
+
+OBSERVACIONES:
+Se pidió continuación de PROMPT 012, flags observados con/sin cargador, interpretación esperada y colores.
+
+RESULTADO GENERAL: revisión estática CONFIRMADA; corrección PENDIENTE de solicitud completa.
+VALIDACIÓN: sin tests nuevos/ejecutados, sin cambios funcionales, sin acceso Raspberry ni hardware; revisión estática no equivale a prueba operacional.
+PENDIENTES: recibir continuación, definir corrección sustentada, implementar/probar en PC, documentar/commit/push y posteriormente despliegue/validación real. No se ejecutaron comandos remotos, Git add/commit/push, reinicios ni pruebas del cargador. No se tocó LoRaWAN, DB, I2C ni ups.py original.
+ESTADO: PENDIENTE.
+
+
+## Continuación de PROMPT 012 — Solicitud completa recibida
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: INGENIERO SENIOR DE SOFTWARE EMBEBIDO, RASPBERRY PI, FASTAPI, JAVASCRIPT, WEBSOCKET, I2C/SMBUS, UPS/BMS, LORAWAN, SYSTEMD, GIT, PRUEBAS AUTOMATIZADAS Y VALIDACIÓN DE SISTEMAS INDUSTRIALES.
+TAREA: TAREA 012.00 — CORREGIR FLAGS DE CARGA Y REPRESENTACIÓN VISUAL UPS.
+FORMATO: tareas 012.01–012.40 de la solicitud completa; las dos tareas preliminares anteriores quedan como antecedente con su numeración intacta, sin sustituir la historia. Esta continuación actualiza la información que faltaba, no contradice lo conocido entonces.
+PROMPT RECIBIDO: adjunto 21a91851-3352-4c48-99be-59918b2d5901/Pasted text.txt completo; corrige solicitud parcial anterior y aporta byte real 0xA2 y extracto de prioridad del script original. No se consultó/ejecutó ups.py remoto.
+EVIDENCIA HARDWARE PREVIA APORTADA POR USUARIO: con cargador 162/0xA2, bit 0x40 False, 0x80 True, 0x20 True, API UNKNOWN y error I2C read failed (ValueError). No fue medición del agente. SIN CARGADOR: byte completo NO MEDIDO en esta intervención, PENDIENTE; casos de tests 0x00/0x20 son fixtures, no afirmación del estado físico. No inferir semántica del bit 0x02 no usado.
+ARCHIVOS CONSULTADOS: solicitud adjunta completa, AGENTS.md, BITACORA.md (parcial existente), dashboard/ups_monitor.py, dashboard/static/js/dashboard.js, dashboard/static/css/style.css, dashboard/templates/index.html (símbolos/panel), tests/test_ups_monitor.py, tests/test_ups_frontend.py.
+ARCHIVOS MODIFICADOS: dashboard/ups_monitor.py, dashboard/static/js/dashboard.js, dashboard/static/css/style.css, tests/test_ups_monitor.py, tests/test_ups_frontend.py, BITACORA.md. README/docs/app/HTML/requirements/LoRaWAN conservados por alcance solicitado.
+COMANDOS EJECUTADOS: Get-Content solicitud/archivos anteriores; git status --short, branch --show-current, log -3 --oneline; rg -n estilos/símbolos; scripts Python de cambios backend/JS/CSS/tests; unittest discover completo dos veces; node --check repetido; git diff --check y git diff de protegidos; git --no-pager diff completo de los cinco archivos de implementación/tests; scripts Python de capturas Chrome usando harness existente; view_image de KPI charging/fast/discharging/critical y panel charging; script de append acumulativo y verificación de prefijo. Comandos de commit/push/remotos posteriores se registran con su evidencia, no anticipar resultados.
+DECISIONES: mantener prioridad de script aportado sin exclusión automática de bits; no cambiar lecturas SMBus, tiempos, aislamiento, signed16 ni API. Visual UNKNOWN técnico > CRITICAL > LOW > FAST_CHARGING > CHARGING > DISCHARGING > IDLE. Sin animaciones (no se requiere añadir regla reduced-motion); símbolos SVG locales existentes, sin HTML/CDN nuevos. Estado de carga conserva texto real incluso en LOW/CRITICAL, pero icono/badge respetan color de alarma. WARNING no oculta verde si carga.
+IMPLEMENTACIÓN / VALIDACIÓN: const upsLabels inicializada antes del primer render; helper semántico/clases CSS compartidas KPI/panel/resumen. CORREGIDO durante revisión: crear nodos badge independientes por vista para evitar que un mismo nodo DOM se traslade del resumen al panel; prueba ampliada confirma textos simultáneos en ambos. Suite final 55 tests OK en 10.763 s, cero fallos/errores/skips; node/whitespace OK.
+EVIDENCIA VISUAL PC: .git/dashboard-review-012/result.json y 15 capturas de fixtures (7 estados KPI/panel + móvil); sin errores JS ni overflow global. Tras ajuste DOM, 3 capturas finales adicionales de parser SMBus simulado 0xA2 -> CHARGING -> CARGANDO en KPI/resumen/panel. Figuras son sintéticas, NO valores medidos en Raspberry. Navegador cerrado, sin DB/I2C/red operacional. Playwright/Chrome ya existentes; tests browser se omiten explícitamente donde falten, pero aquí ejecutados.
+LIMITACIONES: I2C y operación Raspberry no validadas de nuevo; sin cargador no se conoce byte real. Antecedentes de acceso: SSH .2.129 rechazó autenticación en PROMPT 011; .5.169 clave cambiada en PROMPT 010 pendiente de verificar, no se alterará SSH/known_hosts. No ejecutar acciones físicas ni afirmar transiciones reales sin usuario/evidencia. No se escribe UPS, no shutdown, no GPIO, no DB operacional ni LoRaWAN.
+RESULTADO: CORREGIDO y CONFIRMADO en PC mediante pruebas; despliegue/hardware PENDIENTES.
+PENDIENTES: commit/push, acceso verificado y tareas remotas/físicas 012.26–012.40.
+
+### TAREA 012.01 — ESTADO INICIAL PC
+
+OBJETIVO:
+Establecer baseline.
+
+ACCIÓN:
+git status --short; branch; log -3.
+
+EVIDENCIA:
+main, HEAD 9f68332; solo BITACORA.md modificada por revisión preliminar 012.
+
+RESULTADO:
+Cambio previo propio preservado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.02 — REVISAR CAMBIOS PREVIOS DE BITÁCORA
+
+OBJETIVO:
+Conservar solicitud parcial.
+
+ACCIÓN:
+Get-Content final y guardar prefijo binario.
+
+EVIDENCIA:
+Entrada parcial completa preservada en archivo y copia administrativa .git/prompt012-bitacora-before.bin.
+
+RESULTADO:
+Se continúa sin borrar ni renumerar entrada anterior.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.03 — CONFIRMAR CÓDIGO ACTUAL DE FLAGS
+
+OBJETIVO:
+Identificar causa.
+
+ACCIÓN:
+Lectura de monitor y diff.
+
+EVIDENCIA:
+sum de bits >1 generaba Conflicting charge flags y UNKNOWN.
+
+RESULTADO:
+Causa localizada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.04 — CONFIRMAR EVIDENCIA 0xA2
+
+OBJETIVO:
+Registrar hardware previo aportado.
+
+ACCIÓN:
+Incorporar datos de solicitud completa.
+
+EVIDENCIA:
+CON CARGADOR: decimal 162, hex 0xA2; FAST_CHARGING False, CHARGING True, DISCHARGING True; API UNKNOWN con I2C read failed (ValueError).
+
+RESULTADO:
+Evidencia Raspberry previa proporcionada por usuario; sin nueva medición remota.
+
+ESTADO:
+CONFIRMADO EN RASPBERRY (evidencia previa aportada por usuario)
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+Se conserva procedencia: no medición directa nueva del agente.
+
+### TAREA 012.05 — CORREGIR DECODIFICACIÓN DE FLAGS
+
+OBJETIVO:
+Aplicar prioridad del script original aportado.
+
+ACCIÓN:
+if 0x40 / elif 0x80 / elif 0x20 / else IDLE; retirar rechazo de simultáneos.
+
+EVIDENCIA:
+Diff únicamente en bloque de decodificación; 0xA2 CHARGING en test.
+
+RESULTADO:
+Bits múltiples ya no invalidan muestra por ese motivo.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+dashboard/ups_monitor.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.06 — CONSERVAR SIGNED16
+
+OBJETIVO:
+Preservar corriente negativa.
+
+ACCIÓN:
+Conservar fórmula y ejecutar test existente.
+
+EVIDENCIA:
+test_signed_fff8_and_positive_boundaries OK; 0xFFF8=-8.
+
+RESULTADO:
+Conversión preservada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.07 — TEST DE PRIORIDAD DE FLAGS
+
+OBJETIVO:
+Cubrir ocho casos mínimos.
+
+ACCIÓN:
+Nuevo test_charge_flag_priority_including_observed_a2.
+
+EVIDENCIA:
+0x00 IDLE; 0x20 DISCHARGING; 0x40 FAST_CHARGING; 0x80 CHARGING; 0xA0/0xA2 CHARGING; 0xC0/0xE0 FAST_CHARGING: todos OK, error null.
+
+RESULTADO:
+Regresión cubierta con bus simulado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_monitor.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.08 — REVISAR LÓGICA VISUAL ACTUAL
+
+OBJETIVO:
+Localizar selección visual.
+
+ACCIÓN:
+Leer JS/CSS/HTML y símbolos existentes.
+
+EVIDENCIA:
+KPI antes tenía color por battery_state; símbolo por charge_state.
+
+RESULTADO:
+No hace falta modificar HTML.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.09 — DEFINIR ESTADOS VISUALES
+
+OBJETIVO:
+Separar lógica y estilo.
+
+ACCIÓN:
+upsVisual/upsLabels en JS, clases semánticas CSS.
+
+EVIDENCIA:
+UNKNOWN gris DESCONOCIDO; CRITICAL rojo; LOW naranja; carga rápida #6BA425; carga #A6CE39; descarga ámbar; idle azul/gris.
+
+RESULTADO:
+Siete estados visuales implementados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/CSS
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.10 — PRIORIDAD VISUAL
+
+OBJETIVO:
+Evitar verde en batería crítica/baja.
+
+ACCIÓN:
+UNKNOWN técnico > CRITICAL > LOW > modo de carga.
+
+EVIDENCIA:
+Tests de colores CSS computados y textos, con carga normal y rápida.
+
+RESULTADO:
+Prioridad comprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/CSS/tests frontend
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.11 — ICONO DE UPS EN KPI
+
+OBJETIVO:
+Mostrar carga inmediatamente.
+
+ACCIÓN:
+upsKpi aplica clase y símbolo existente batería-cargando.
+
+EVIDENCIA:
+CARGANDO verde #A6CE39; CARGA RÁPIDA #6BA425, porcentaje sin cambios.
+
+RESULTADO:
+KPI diferencia modos.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+dashboard/static/js/dashboard.js y style.css
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.12 — PANEL DETALLADO UPS
+
+OBJETIVO:
+Compartir señalización en Sistema.
+
+ACCIÓN:
+Estado UPS y badge Estado de carga traducidos; icono del título por clase semántica.
+
+EVIDENCIA:
+Panel mantiene métricas/celdas/delta/balance; pruebas y capturas.
+
+RESULTADO:
+Coherencia KPI/resumen/panel.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/CSS
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.13 — NO USAR COLOR SOLO POR battery_state
+
+OBJETIVO:
+Incluir charge_state sin perder alertas.
+
+ACCIÓN:
+Clases consideran state, battery_state y charge_state.
+
+EVIDENCIA:
+WARNING+CHARGING conserva carga verde; LOW/CRITICAL prevalecen.
+
+RESULTADO:
+Limitación anterior corregida.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/CSS/tests frontend
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.14 — PRUEBAS FRONTEND CHARGING
+
+OBJETIVO:
+Probar carga normal.
+
+ACCIÓN:
+test_charging_pyp_green_and_spanish_label.
+
+EVIDENCIA:
+72 %, CARGANDO, rgb(166,206,57), icono batería-cargando; OK.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.15 — PRUEBA FAST_CHARGING
+
+OBJETIVO:
+Diferenciar carga rápida.
+
+ACCIÓN:
+test_fast_charging_stronger_green.
+
+EVIDENCIA:
+CARGA RÁPIDA, rgb(107,164,37); OK.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.16 — PRUEBA DISCHARGING
+
+OBJETIVO:
+Mostrar descarga ámbar.
+
+ACCIÓN:
+test_discharging_amber y transición sin recarga.
+
+EVIDENCIA:
+DESCARGANDO, rgb(177,129,45); OK.
+
+RESULTADO:
+Prueba aprobada; no implica flag físico sin cargador.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.17 — PRUEBAS LOW Y CRITICAL
+
+OBJETIVO:
+Priorizar alarmas visuales.
+
+ACCIÓN:
+test_low_and_critical_override_all_charging_modes.
+
+EVIDENCIA:
+LOW naranja rgb(208,115,50); CRITICAL rojo rgb(196,67,67), incluso FAST_CHARGING; OK.
+
+RESULTADO:
+Sin verde de carga en icono crítico.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.18 — UNKNOWN REAL
+
+OBJETIVO:
+Mantener falla técnica.
+
+ACCIÓN:
+test_technical_unknown_overrides_battery_and_charge y tests anteriores de ausente/stale.
+
+EVIDENCIA:
+DESCONOCIDO gris rgb(138,152,159), sin porcentaje ficticio ni animación; OK.
+
+RESULTADO:
+UNKNOWN real y stale preservados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.19 — VALIDACIÓN JAVASCRIPT
+
+OBJETIVO:
+Verificar sintaxis.
+
+ACCIÓN:
+node --check dashboard/static/js/dashboard.js, repetido tras ajuste DOM.
+
+EVIDENCIA:
+Sin salida/error.
+
+RESULTADO:
+Sintaxis correcta.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.20 — SUITE COMPLETA
+
+OBJETIVO:
+Detectar regresiones.
+
+ACCIÓN:
+python -m unittest discover -s tests -v, repetido tras ajuste DOM.
+
+EVIDENCIA:
+55 tests OK; ejecución inicial 11.024 s; final 10.763 s; cero fallos/errores/skips.
+
+RESULTADO:
+47 previos más 8 nuevos pasan.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests existentes ampliados
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.21 — PROTEGER LORAWAN
+
+OBJETIVO:
+Conservar núcleo.
+
+ACCIÓN:
+git diff -- lorawan_queue.py; revisión protegidos.
+
+EVIDENCIA:
+Sin salida; app.py, HTML y requirements también sin cambios.
+
+RESULTADO:
+LoRaWAN código intacto; no acredita operación remota.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.22 — REVISIÓN COMPLETA DE DIFF
+
+OBJETIVO:
+Auditar alcance.
+
+ACCIÓN:
+git --no-pager diff de monitor, JS, CSS y ambos tests; diff --check; estado.
+
+EVIDENCIA:
+Solo seis archivos esperados incluyendo bitácora; sin whitespace errors (advertencia LF/CRLF).
+
+RESULTADO:
+Diff revisado; comprobación final antes del commit.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.23 — BITÁCORA PRE-COMMIT
+
+OBJETIVO:
+Continuar PROMPT 012.
+
+ACCIÓN:
+Append de esta continuación con 40 tareas y comparación binaria.
+
+EVIDENCIA:
+Evidencia 0xA2, causa, prioridad, pruebas, capturas y pendientes separados.
+
+RESULTADO:
+Historia parcial/anterior preservada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.24 — COMMIT
+
+OBJETIVO:
+Versionar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: staging explícito de seis archivos y commit Fix UPS charge flags and charging status visuals.
+
+EVIDENCIA:
+Sin hash aún.
+
+RESULTADO:
+Se registrará resultado después.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Seis archivos esperados
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.25 — PUSH
+
+OBJETIVO:
+Publicar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: git push origin main; git status.
+
+EVIDENCIA:
+Sin salida aún.
+
+RESULTADO:
+Se registrará evidencia real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.26 — ESTADO PRE-PULL RASPBERRY
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Consultar git status por SSH verificado, sin borrar .venv/ ni ttn_iotrack_receiver.py.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.27 — GIT PULL
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y verificar hash.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.28 — REINICIO DASHBOARD
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl restart/status dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.29 — CAPTURAR FLAGS REALES SIN CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Usuario desconecta cargador; leer registro 0x02 con SMBus(1), dirección 0x2d; registrar byte real, no asumir 0x00/0x20.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.30 — VALIDACIÓN API SIN CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl /api/ups local y registrar state/charge_state/battery_state/porcentaje/corriente/external_power/error.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.31 — CAPTURAR FLAGS REALES CON CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Usuario conecta cargador; leer 0x02 y registrar byte real aunque difiera de 0xA2.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.32 — VALIDACIÓN API CON CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Consultar /api/ups y contrastar prioridad con byte medido.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.33 — VALIDACIÓN VISUAL CON CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Recarga inicial Ctrl+Shift+R; comprobar porcentaje real/CARGANDO o CARGA RÁPIDA y verde salvo LOW/CRITICAL.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.34 — VALIDACIÓN VISUAL SIN CARGADOR
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Usuario desconecta; observar transición por WebSocket al estado físico real y abandono de verde.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.35 — VALIDACIÓN DE SERVICIOS
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl is-active ttn-gateway.service lorawan-queue.service dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.36 — VALIDACIÓN COLA LORAWAN
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: sqlite3 -readonly /home/pi/lorawan_queue/lorawan_queue.db con SELECT de conteos por estado; no escrituras; conteos solos no acreditan no regresión.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.37 — JOURNAL DASHBOARD
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Consultar journal reciente acotado sin divulgar datos sensibles.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.38 — ACTUALIZAR BITÁCORA CON HARDWARE REAL
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Agregar evidencia obtenida al PC; nunca editar bitácora Raspberry.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.39 — COMMIT DOCUMENTAL FINAL
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Commit/push PC solo después de obtener evidencia real, no afirmar medición ficticia.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### TAREA 012.40 — SINCRONIZACIÓN FINAL RASPBERRY
+
+OBJETIVO:
+Validar/desplegar en orden con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y status; verificar hashes.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso remoto y, cuando aplica, intervención física del usuario.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.

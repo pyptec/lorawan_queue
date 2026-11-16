@@ -43,9 +43,15 @@ class UPSMonitor:
             if any(v == 65535 for v in vbus) or capacity == 65535:
                 raise ValueError("Invalid measurement")
             current = raw_current - 0x10000 if raw_current >= 0x8000 else raw_current
-            charge = next((name for mask, name in ((0x40, "FAST_CHARGING"), (0x80, "CHARGING"), (0x20, "DISCHARGING")) if flags & mask), "IDLE")
-            if sum(bool(flags & mask) for mask in (0x40, 0x80, 0x20)) > 1:
-                raise ValueError("Conflicting charge flags")
+            # Priority from the original script; recognized bits can coexist (0xA2).
+            if flags & 0x40:
+                charge = "FAST_CHARGING"
+            elif flags & 0x80:
+                charge = "CHARGING"
+            elif flags & 0x20:
+                charge = "DISCHARGING"
+            else:
+                charge = "IDLE"
             external = True if vbus[0] >= 4000 else False if vbus[0] <= 1000 else None
             delta = max(cells) - min(cells)
             return {"state": "OK", "source": SOURCE, "charge_state": charge,

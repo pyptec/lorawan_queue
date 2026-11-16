@@ -171,7 +171,7 @@ function renderKpis(data, stale) {
     kpi("Cola local", "database", pending, queue.state === "OK" ? "SQLite · uplinks persistidos" : "DB: NO DISPONIBLE", qKnown ? "" : "UNKNOWN", queueInfo),
     kpi("Internet", "internet", badge(stale ? "UNKNOWN" : state(internet.state)), "Pruebas DNS + TCP externo", stale ? "UNKNOWN" : state(internet.state)),
     kpi("TTN / servidor", "cloud", badge(stale ? "UNKNOWN" : state(gateway.ttn?.state)), "Evidencia PUSH_ACK UDP", stale ? "UNKNOWN" : state(gateway.ttn?.state)),
-    kpi("UPS", ups.charge_state?.includes("CHARGING") && ups.charge_state !== "DISCHARGING" ? "battery-charging" : "battery", ups.state === "OK" ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN", ups.charge_state || "UNKNOWN", ups.battery_state || "UNKNOWN"),
+    upsKpi(ups),
     kpi("Temperatura CPU", "thermometer", numeric(system.temperature_c, " °C"), validNumber(system.temperature_c) ? "Temperatura del sistema" : "Fuente térmica no disponible", tempState)
   );
 }
@@ -374,6 +374,8 @@ function render(data, stale = false) {
   const stamp = data.updated_at?.queue ?? JSON.stringify([data.queue, data.devices]);
   if (stamp !== queueStamp) { queueStamp = stamp; renderDevices(data); renderQueueTable(data.queue || {}); currentEvents = eventsFromRows(Array.isArray(data.queue?.rows) ? data.queue.rows : []); renderEvents(); }
 }
+const upsLabels = {UNKNOWN: "DESCONOCIDO", CRITICAL: "BATERÍA CRÍTICA", LOW: "BATERÍA BAJA", FAST_CHARGING: "CARGA RÁPIDA", CHARGING: "CARGANDO", DISCHARGING: "DESCARGANDO", IDLE: "EN ESPERA"};
+
 let retry = 1000;
 function connect() {
   const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/status");
@@ -394,19 +396,40 @@ function upsValue(data, stale) {
   const ups = data.ups || {};
   return !stale && ups.state === "OK" ? ups : {state: "UNKNOWN", battery_state: "UNKNOWN", charge_state: "UNKNOWN"};
 }
+function upsVisual(ups) {
+  const validCharge = ["FAST_CHARGING", "CHARGING", "DISCHARGING", "IDLE"].includes(ups.charge_state);
+  const status = ups.state !== "OK" || ups.battery_state === "UNKNOWN" || !validCharge ? "UNKNOWN"
+    : ups.battery_state === "CRITICAL" ? "CRITICAL" : ups.battery_state === "LOW" ? "LOW" : ups.charge_state;
+  return {state: status, label: upsLabels[status], className: "ups-" + status.toLowerCase().replaceAll("_", "-")};
+}
+function upsKpi(ups) {
+  const visual = upsVisual(ups);
+  const charging = ["CHARGING", "FAST_CHARGING"].includes(ups.charge_state);
+  const card = kpi("UPS", charging && visual.state !== "UNKNOWN" ? "battery-charging" : "battery", ups.state === "OK" ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN", visual.label, ups.battery_state || "UNKNOWN");
+  card.classList.add("ups-kpi", visual.className);
+  return card;
+}
+function upsStatus(label, visual) {
+  const node = badge(label, visual.state);
+  node.classList.add("ups-status", visual.className);
+  return node;
+}
 function renderUPS(data, stale) {
-  const ups = upsValue(data, stale), known = ups.state === "OK";
+  const ups = upsValue(data, stale), known = ups.state === "OK", visual = upsVisual(ups);
+  const panel = document.querySelector(".ups-panel");
+  Object.keys(upsLabels).forEach(key => panel.classList.remove("ups-" + key.toLowerCase().replaceAll("_", "-")));
+  panel.classList.add(visual.className);
   const power = ups.external_power === true ? "PRESENT" : ups.external_power === false ? "NOT_PRESENT" : "UNKNOWN";
-  const overview = [["UPS · Batería", known ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN"], ["Voltaje pack", numeric(ups.battery_voltage_mv / 1000, " V", 3)], ["Corriente", numeric(ups.battery_current_ma, " mA")], ["Estado de carga", state(ups.charge_state)], ["Alimentación externa", power], ["Desbalance de celdas", numeric(ups.cell_delta_mv, " mV", 0)]];
-  $("ups-overview").replaceChildren(detailList(overview));
+  const overview = () => [["UPS · Batería", known ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN"], ["Voltaje pack", numeric(ups.battery_voltage_mv / 1000, " V", 3)], ["Corriente", numeric(ups.battery_current_ma, " mA")], ["Estado de carga", upsStatus(upsLabels[ups.charge_state] || upsLabels.UNKNOWN, visual)], ["Alimentación externa", power], ["Desbalance de celdas", numeric(ups.cell_delta_mv, " mV", 0)]];
+  $("ups-overview").replaceChildren(detailList(overview()));
   $("ups-cells").replaceChildren();
   $("ups-cell-summary").replaceChildren();
   if (!known) {
-    $("ups-detail").replaceChildren(empty("UPS no disponible", "Sin lectura I²C válida en 0x2d · UNKNOWN", "battery"));
+    $("ups-detail").replaceChildren(empty("UPS no disponible · DESCONOCIDO", "Sin lectura I²C válida en 0x2d · UNKNOWN", "battery"));
     return;
   }
   $("ups-detail").replaceChildren(detailList([
-    ["Estado batería", badge(ups.battery_state)], ...overview,
+    ["Estado UPS", upsStatus(visual.label, visual)], ["Estado batería", badge(ups.battery_state)], ...overview(),
     ["Potencia batería · CALCULADA", numeric(ups.battery_power_mw, " mW")],
     ["Capacidad restante", numeric(ups.remaining_capacity_mah, " mAh", 0)],
     ["VBUS Voltage", numeric(ups.vbus_voltage_mv, " mV")], ["VBUS Current", numeric(ups.vbus_current_ma, " mA")], ["VBUS Power", numeric(ups.vbus_power_mw, " mW")],

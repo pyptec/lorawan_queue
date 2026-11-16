@@ -90,3 +90,49 @@ class UPSFrontendTests(unittest.TestCase):
                 self.assertIn("72 %", self.card().inner_text())
                 self.assertEqual(self.card().get_attribute("data-state"), "OK")
                 self.assertNotIn("UPS no disponible", self.page.locator("#ups-detail").inner_text())
+
+    def assert_visual(self, charge, battery, visual, label, color):
+        self.send({"state":"OK", "battery_state":battery, "charge_state":charge, "battery_percent":72})
+        self.assertIn("72 %", self.card().inner_text())
+        self.assertIn(label, self.card().inner_text())
+        self.assertIn("ups-" + visual, self.card().get_attribute("class"))
+        self.assertEqual(self.card().locator(".icon-tile").evaluate("e=>getComputedStyle(e).color"), color)
+        self.assertIn(label, self.page.locator("#ups-detail").inner_text())
+        self.assertIn({"CHARGING":"CARGANDO", "FAST_CHARGING":"CARGA RÁPIDA", "DISCHARGING":"DESCARGANDO", "IDLE":"EN ESPERA"}[charge], self.page.locator("#ups-overview").inner_text())
+        self.assertEqual(self.page.locator(".ups-panel h3 .icon").evaluate("e=>getComputedStyle(e).color"), color)
+        self.assertEqual(self.page.locator("#ups-detail .ups-status").first.evaluate("e=>getComputedStyle(e).color"), color)
+        self.assertEqual(self.card().locator(".icon-tile").evaluate("e=>getComputedStyle(e).animationName"), "none")
+
+    def test_charging_pyp_green_and_spanish_label(self):
+        self.assert_visual("CHARGING", "OK", "charging", "CARGANDO", "rgb(166, 206, 57)")
+        self.assertIn("#i-battery-charging", self.card().locator("use").get_attribute("href"))
+
+    def test_fast_charging_stronger_green(self):
+        self.assert_visual("FAST_CHARGING", "OK", "fast-charging", "CARGA RÁPIDA", "rgb(107, 164, 37)")
+
+    def test_discharging_amber(self):
+        self.assert_visual("DISCHARGING", "OK", "discharging", "DESCARGANDO", "rgb(177, 129, 45)")
+
+    def test_idle_neutral(self):
+        self.assert_visual("IDLE", "OK", "idle", "EN ESPERA", "rgb(113, 134, 146)")
+
+    def test_low_and_critical_override_all_charging_modes(self):
+        for charge in ("CHARGING", "FAST_CHARGING"):
+            with self.subTest(charge=charge):
+                self.assert_visual(charge, "LOW", "low", "BATERÍA BAJA", "rgb(208, 115, 50)")
+                self.assert_visual(charge, "CRITICAL", "critical", "BATERÍA CRÍTICA", "rgb(196, 67, 67)")
+
+    def test_technical_unknown_overrides_battery_and_charge(self):
+        self.send({"state":"UNKNOWN", "battery_state":"CRITICAL", "charge_state":"FAST_CHARGING", "battery_percent":72})
+        self.assertIn("DESCONOCIDO", self.card().inner_text())
+        self.assertNotIn("72 %", self.card().inner_text())
+        self.assertIn("ups-unknown", self.card().get_attribute("class"))
+        self.assertEqual(self.card().locator(".icon-tile").evaluate("e=>getComputedStyle(e).color"), "rgb(138, 152, 159)")
+        self.assertEqual(self.card().locator(".icon-tile").evaluate("e=>getComputedStyle(e).animationName"), "none")
+        self.assertIn("DESCONOCIDO", self.page.locator("#ups-detail").inner_text())
+
+    def test_charge_transition_updates_without_reload(self):
+        # Browser transport fixture, not a claim about unplugged hardware flags.
+        self.assert_visual("CHARGING", "WARNING", "charging", "CARGANDO", "rgb(166, 206, 57)")
+        self.assert_visual("DISCHARGING", "OK", "discharging", "DESCARGANDO", "rgb(177, 129, 45)")
+        self.assert_visual("IDLE", "OK", "idle", "EN ESPERA", "rgb(113, 134, 146)")

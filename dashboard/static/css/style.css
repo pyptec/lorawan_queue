@@ -1928,3 +1928,17 @@ body.menu-open .sidebar {
 @media(max-width:360px) { .ups-panel .panel-heading { flex-wrap:wrap; } }
 
 .kpi[data-state="WARNING"] .icon-tile,.kpi[data-state="LOW"] .icon-tile { color:#b1812d; background:#fff5df; }
+
+/* UPS semantic state: technical UNKNOWN > CRITICAL > LOW > charge mode.
+   Charge and battery alerts are visual indicators, without device actions. */
+.ups-unknown { --ups-color:#8a989f; --ups-soft:#f0f3f4; }
+.ups-critical { --ups-color:#c44343; --ups-soft:#fff0f0; }
+.ups-low { --ups-color:#d07332; --ups-soft:#fff1e5; }
+.ups-fast-charging { --ups-color:#6BA425; --ups-soft:#edf6df; }
+.ups-charging { --ups-color:#A6CE39; --ups-soft:#f2f8e5; }
+.ups-discharging { --ups-color:#b1812d; --ups-soft:#fff5df; }
+.ups-idle { --ups-color:#718692; --ups-soft:#eff3f6; }
+.ups-kpi.kpi .icon-tile { color:var(--ups-color); background:var(--ups-soft); }
+.ups-kpi .kpi-note { color:var(--ups-color); font-weight:600; }
+.ups-panel h3 .icon { color:var(--ups-color,#8a989f); }
+.ups-status.badge { color:var(--ups-color); background:var(--ups-soft); }
