@@ -389,11 +389,10 @@ render({health: "UNKNOWN", queue: {state: "UNKNOWN", rows: []}, devices: [], ser
 goTo("overview");
 connect();
 
-// UPS freshness is independent of the other source timestamps.
+// UPS availability follows transport state and the backend, without comparing clocks.
 function upsValue(data, stale) {
   const ups = data.ups || {};
-  const fresh = validNumber(ups.sampled_at) && Date.now() / 1000 - ups.sampled_at <= 20 && Date.now() / 1000 >= ups.sampled_at - 5;
-  return !stale && fresh && ups.state === "OK" ? ups : {state: "UNKNOWN", battery_state: "UNKNOWN", charge_state: "UNKNOWN"};
+  return !stale && ups.state === "OK" ? ups : {state: "UNKNOWN", battery_state: "UNKNOWN", charge_state: "UNKNOWN"};
 }
 function renderUPS(data, stale) {
   const ups = upsValue(data, stale), known = ups.state === "OK";

@@ -1161,3 +1161,711 @@ COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (aún no ejecutados al escribir este pá
 
 ESTADO GENERAL: CONFIRMADO EN PC; validación Raspberry PENDIENTE.
 LISTO PARA GIT PULL EN RASPBERRY una vez verificada identidad SSH y estado pre-pull remoto.
+
+
+# PROMPT 011 — Corrección falso UNKNOWN UPS
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: INGENIERO SENIOR DE SOFTWARE EMBEBIDO, RASPBERRY PI, FASTAPI, JAVASCRIPT, WEBSOCKET, I2C/SMBUS, LORAWAN, SYSTEMD, GIT Y VALIDACIÓN DE SISTEMAS INDUSTRIALES.
+TAREA GENERAL: TAREA 011.00 — CORREGIR EL FALSO ESTADO UNKNOWN DE LA UPS EN EL DASHBOARD.
+FORMATO: tareas numeradas con los siete campos exigidos, usando estados especificos de PROMPT 011.
+PROMPT RECIBIDO: adjunto 4868dbda-4bf6-496a-81e3-d3216aedaf79/Pasted text.txt; sustituir upsValue para confiar en !stale y ups.state OK; conservar backend/LoRaWAN/diseño; probar, documentar, commit/push PC y desplegar solo mediante Git Raspberry.
+EVIDENCIA APORTADA POR USUARIO: API/WS/SMBus/I2C UPS OK en Raspberry; esta intervencion no verifico esos resultados remotos.
+ARCHIVOS CONSULTADOS: solicitud completa (por tramos), AGENTS.md, dashboard/static/js/dashboard.js, dashboard/app.py, .git/dashboard-review-009/visual_check.py para capacidad local de navegador. Estado actual/commit Git y diffs de archivos protegidos.
+ARCHIVOS MODIFICADOS: dashboard/static/js/dashboard.js, tests/test_ups_frontend.py (nuevo), BITACORA.md. README/docs/AGENTS conservados por alcance minimo; no se borra historia anterior de frescura por timestamp.
+COMANDOS EJECUTADOS: Get-Content de solicitud/codigo/AGENTS y script visual previo; git status/--short, log -1/-2 --oneline, branch --show-current; rg -n upsValue/Date.now/ws.onclose/render; scripts Python para test y cambio JS; unittest discover frontend antes del cambio (fallo esperado) y suite completa despues; node --check; git diff --check, git diff de monitor/app/proxy y JS; SSH estricto a direccion alternativa (rechazado); script de capturas locales usando clase de prueba; view_image de resumen escritorio y sistema movil; append de bitacora y comprobacion prefijo. Comandos posteriores se registran al obtener resultado.
+DECISIÓN: disponibilidad UPS depende del stale global y state backend. sampled_at permanece para presentacion de hora, sin decidir disponibilidad por reloj del navegador. No se agrega otra politica de antiguedad ni se modifica backend. Una cache detenida con transporte activo requiere eventual deteccion de fuente backend; no se resuelve en este cambio minimo.
+PRUEBAS / VALIDACIÓN: antes: 4 tests frontend, 3 failures (dos subtests pasado/futuro y caso sin timestamp), UNKNOWN real y stale pasan. Despues: 47 tests OK en 6.602 s, sin skips; node y whitespace correctos. Test de navegador usa Chrome/Playwright YA instalados, sin dependencia nueva. Si faltan Playwright/Chrome en otro PC, estas cuatro pruebas se omiten explicitamente y no acreditan UI en ese entorno. WebSocket simulado en navegador, se ejecutan codigo real completo y manejadores reales onmessage/onclose; no hay datos sinteticos en producto.
+EVIDENCIA VISUAL LOCAL: cinco capturas de fixtures fuera de commits en .git/dashboard-review-011 (resumen/sistema escritorio1366 y movil390, desconexion movil), result.json: sin errores JS, sin overflow global. Capturas usan fecha 2000 para demostrar desfase; porcentaje 72 de fixture, NO medicion real. Inspeccionadas con view_image resumen escritorio y sistema movil. Chrome cerrado; sin servidor ni DB ni I2C en estas pruebas.
+RESULTADO: CORREGIDO en PC con evidencia; validacion Raspberry/operacional PENDIENTE.
+PENDIENTES: commit/push y acceso remoto. Direccion 192.168.2.129 rechaza autenticacion; antecedente 192.168.5.169 tiene clave cambiada pendiente de verificacion desde PROMPT 010, no se elude ni se altera known_hosts. No borrar .venv ni ttn_iotrack_receiver.py; no cambios permanentes en Raspberry.
+
+## TAREA 011.01 — ESTADO INICIAL
+
+OBJETIVO:
+Revisar repositorio.
+
+ACCIÓN:
+git status; git branch --show-current; git log -1 --oneline.
+
+EVIDENCIA:
+main; c79616c; working tree clean.
+
+RESULTADO:
+Sin cambios previos.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.02 — CONFIRMAR LÓGICA PROBLEMÁTICA
+
+OBJETIVO:
+Localizar falso UNKNOWN.
+
+ACCIÓN:
+rg y lectura de upsValue y onclose.
+
+EVIDENCIA:
+Linea 395 compara Date.now()/1000 con ups.sampled_at; tests previos fallan con fechas 2000 y 2100.
+
+RESULTADO:
+Causa reproducida en navegador local.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.03 — CORRECCIÓN DE upsValue
+
+OBJETIVO:
+Eliminar comparación de relojes.
+
+ACCIÓN:
+Eliminar const fresh y su condicion; actualizar comentario.
+
+EVIDENCIA:
+Diff localizado: !stale && ups.state === "OK".
+
+RESULTADO:
+Solo transporte y estado backend deciden disponibilidad.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+dashboard/static/js/dashboard.js
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.04 — CONSERVAR ESTADO STALE GLOBAL
+
+OBJETIVO:
+Preservar degradacion al desconectar.
+
+ACCIÓN:
+Revisar onclose y ejecutar prueba de navegador.
+
+EVIDENCIA:
+render(lastData, true) intacto; test_websocket_close_degrades_last_ok_sample OK.
+
+RESULTADO:
+UPS UNKNOWN tras onclose.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.05 — CONSERVAR UNKNOWN REAL
+
+OBJETIVO:
+No convertir datos invalidos en OK.
+
+ACCIÓN:
+Test con state UNKNOWN, ups null y ups vacio por onmessage.
+
+EVIDENCIA:
+test_unknown_and_missing_remain_unknown OK; KPI UNKNOWN sin 72 % y panel no disponible.
+
+RESULTADO:
+UNKNOWN real conservado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.06 — TEST UPS OK
+
+OBJETIVO:
+Mostrar 72 % con transporte activo.
+
+ACCIÓN:
+Mensaje sintetico state OK, battery_percent 72 sin sampled_at.
+
+EVIDENCIA:
+test_ok_without_sample_timestamp_renders_percent OK; KPI/resumen/panel disponibles.
+
+RESULTADO:
+UI muestra porcentaje sin exigir timestamp.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.07 — TEST STALE
+
+OBJETIVO:
+Degradar ultima UPS OK ante desconexion.
+
+ACCIÓN:
+Invocar manejador real testSocket.onclose con ultima muestra OK.
+
+EVIDENCIA:
+test_websocket_close_degrades_last_ok_sample OK; conexion STALE, KPI UNKNOWN, panel no disponible.
+
+RESULTADO:
+Stale global preservado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.08 — TEST SINCRONIZACIÓN DE RELOJES
+
+OBJETIVO:
+Eliminar falso UNKNOWN por desfase.
+
+ACCIÓN:
+Mensajes con sampled_at 946684800 (2000) y 4102444800 (2100).
+
+EVIDENCIA:
+test_clock_skew_past_and_future_does_not_hide_ok_ups OK; ambos casos fallaban antes.
+
+RESULTADO:
+UI muestra 72 % y estado OK para pasado y futuro.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+tests/test_ups_frontend.py
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.09 — VALIDACIÓN JAVASCRIPT
+
+OBJETIVO:
+Verificar sintaxis.
+
+ACCIÓN:
+node --check dashboard/static/js/dashboard.js.
+
+EVIDENCIA:
+Sin salida/error.
+
+RESULTADO:
+Sintaxis correcta.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.10 — PRUEBAS COMPLETAS
+
+OBJETIVO:
+Comprobar regresiones locales.
+
+ACCIÓN:
+python -m unittest discover -s tests -v.
+
+EVIDENCIA:
+47 tests, 6.602 s, OK; 0 failures, 0 errors, sin skips en este PC.
+
+RESULTADO:
+43 previos y 4 nuevos pasan.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.11 — PROTEGER BACKEND UPS
+
+OBJETIVO:
+Mantener backend intacto.
+
+ACCIÓN:
+git diff -- dashboard/ups_monitor.py dashboard/app.py.
+
+EVIDENCIA:
+Sin salida.
+
+RESULTADO:
+Backend sin cambios.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.12 — PROTEGER LORAWAN
+
+OBJETIVO:
+Mantener proxy intacto.
+
+ACCIÓN:
+git diff -- lorawan_queue.py.
+
+EVIDENCIA:
+Sin salida.
+
+RESULTADO:
+LoRaWAN sin cambios de codigo.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.13 — GIT DIFF
+
+OBJETIVO:
+Auditar alcance.
+
+ACCIÓN:
+git status --short; git --no-pager diff; git diff --check.
+
+EVIDENCIA:
+JS modificado y test nuevo; bitacora agregada por esta tarea; sin whitespace errors.
+
+RESULTADO:
+Tres archivos previstos; sin borrados accidentales.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.14 — BITÁCORA
+
+OBJETIVO:
+Registrar PROMPT 011 acumulativo.
+
+ACCIÓN:
+Append de tareas y comparacion binaria de prefijo.
+
+EVIDENCIA:
+El prefijo anterior se guarda en .git/prompt011-bitacora-before.bin y se verifica sin alteraciones.
+
+RESULTADO:
+Historia conservada, estados y limites separados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.15 — REVISIÓN PRE-COMMIT
+
+OBJETIVO:
+Verificar alcance final.
+
+ACCIÓN:
+Previsto: git diff --check, validacion exacta de codigo y paths; revisar diff del test nuevo.
+
+EVIDENCIA:
+Pruebas y diff local conocidos; revision final en continuacion.
+
+RESULTADO:
+Pendiente comando pre-commit.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.16 — COMMIT
+
+OBJETIVO:
+Versionar correccion en PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aun: git add de JS/bitacora/test y git commit -m "Fix UPS frontend false UNKNOWN state".
+
+EVIDENCIA:
+Sin hash aun.
+
+RESULTADO:
+Se registrara despues de ejecutarlo.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+JS, BITACORA y test frontend
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.17 — PUSH
+
+OBJETIVO:
+Publicar main desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aun: git push origin main; git status.
+
+EVIDENCIA:
+Sin salida push aun.
+
+RESULTADO:
+Se registrara resultado real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC; no acredita hardware ni operacion Raspberry.
+
+## TAREA 011.18 — ESTADO PRE-PULL RASPBERRY
+
+OBJETIVO:
+Inspeccionar estado remoto antes de pull.
+
+ACCIÓN:
+ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes pi@192.168.2.129 con git status/branch/log remotos.
+
+EVIDENCIA:
+Permission denied (publickey,password), codigo 1.
+
+RESULTADO:
+Sin autenticacion; comandos remotos no ejecutados.
+
+ESTADO:
+BLOQUEADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.19 — GIT PULL
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y comprobar commit.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.20 — REINICIO DASHBOARD
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl restart/status dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.21 — LIMPIAR CACHÉ DEL NAVEGADOR
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Ctrl+F5 o Ctrl+Shift+R y verificar nuevo JavaScript servido.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.22 — VALIDACIÓN API UPS
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl -s http://127.0.0.1:8080/api/ups.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.23 — VALIDACIÓN WEBSOCKET
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Leer solo campo ups desde ws://127.0.0.1:8080/ws/status con timeout.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.24 — VALIDACIÓN VISUAL
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Abrir dashboard Raspberry tras recarga y comprobar KPI/panel con datos reales.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.25 — VALIDACIÓN SERVICIOS
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl is-active ttn-gateway.service lorawan-queue.service dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.26 — VALIDACIÓN COLA
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: sqlite3 -readonly con SELECT status, COUNT(*) FROM uplink_queue GROUP BY status.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.27 — NO REGRESIÓN OPERACIONAL
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Consolidar RF/TTN/ACK/fast-path/cola/AP/SSH con evidencia real; conteos/servicios solos no acreditan continuidad.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.28 — REGISTRO VALIDACIÓN RASPBERRY
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Agregar evidencia remota real en PC, nunca editar bitacora Raspberry.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.29 — COMMIT DOCUMENTAL
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Versionar evidencia Raspberry desde PC despues de obtenerla.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+## TAREA 011.30 — SINCRONIZACIÓN FINAL RASPBERRY
+
+OBJETIVO:
+Completar despliegue/validacion real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only de documentacion y comprobar hash.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE por acceso SSH no disponible.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
