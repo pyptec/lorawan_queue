@@ -349,3 +349,33 @@ COMANDOS EJECUTADOS adicionales: scripts Python de ajustes de interfaz y formato
 RESULTADO: CONFIRMADO rediseño y validación local. LISTO PARA REVISIÓN VISUAL de Jaime. Solo presentación y documentación modificadas; backend, cola, DB operacional y Raspberry conservados. No se afirma funcionamiento RF/TTN ni ausencia de impacto operacional por evidencia de navegador PC.
 PENDIENTES: aprobación visual; validación Raspberry/LAN/hardware posterior según plan, nunca ejecutada en esta intervención. Sin add/commit/push ni despliegue. Los pasos remotos permanecen sugeridos NO ejecutados.
 ESTADO: CONFIRMADO en PC; validación operacional PENDIENTE.
+
+
+## PROMPT 009 — Integración UPS HAT E al Dashboard SAMEE LoRaWAN
+
+FECHA: 2026-11-16 (America/Bogota).
+ROL: Ingeniero senior Python/FastAPI/Raspberry/I2C/dashboard/Git.
+TAREA: solicitud adjunta Pasted text.txt: integrar UPS solo lectura, muestreo independiente, API/cache/WS, KPI/panel/celdas, tests y documentacion; sin commit automatico.
+FORMATO: implementacion PC y entrega de 14 apartados solicitados.
+CONTEXTO / EVIDENCIA: main limpio al iniciar; git pull --ff-only: Already up to date. Registros y deteccion 2d aportados por usuario; sin acceso real Raspberry en esta intervencion. No se afirma funcionamiento del hardware. Fases operacionales anteriores PENDIENTES; se continua implementacion local expresamente solicitada.
+ARCHIVOS CONSULTADOS: solicitud adjunta, AGENTS.md, README.md, BITACORA.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, dashboard/app.py, dashboard/static/js/dashboard.js, dashboard/templates/index.html, dashboard/static/css/style.css, tests/test_dashboard.py, requirements.txt, requirements-dev.txt, deploy/dashboard.service.
+ARCHIVOS MODIFICADOS: dashboard/ups_monitor.py (nuevo), dashboard/app.py, dashboard/templates/index.html, dashboard/static/css/style.css, dashboard/static/js/dashboard.js, tests/test_ups_monitor.py (nuevo), README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, BITACORA.md. AGENTS.md conservado.
+COMANDOS EJECUTADOS: Get-Content de solicitud y archivos anteriores; Get-Location; rg --files; rg -n para render/IDs/configuracion/smbus/SSH; git status --short; git branch --show-current (main); git pull --ff-only; scripts Python via PowerShell para escritura de implementacion/tests/documentacion (escalacion por entorno de solo lectura). Busqueda sin coincidencias smbus/SSH devolvio codigo 1; no es validacion operacional.
+REGISTROS I2C / IMPLEMENTACION / ARQUITECTURA / API / WEBSOCKET / UI: detalle en anexos PROMPT 009 de README y ARQUITECTURA. Se conserva codigo LoRaWAN; smbus opcional sin instalar librerias. Proceso hijo spawn con timeout 2 s y pausa 5 s; API y WS consumen cache. Voltaje/corriente signed16, potencia CALCULADA, VBUS con banda UNKNOWN, tiempos IC tecnicos y celdas; UNKNOWN ante fallos.
+DECISIONES: VBUS >=4 V presente, <=1 V ausente, entre ambos desconocido; criterios visuales documentados; sin autonomia confiable ni acciones. Diferenciar state de fuente y battery_state.
+PRUEBAS / VALIDACION: PENDIENTE ejecucion PC despues de cambios.
+LIMITACIONES: hardware no consultado; autonomia no validada; sin shutdown; solo lecturas I2C; potencia calculada; criterio VBUS/alarma visual; rendimiento spawn, acceso smbus del venv y aislamiento operacional PENDIENTES.
+RESULTADO: CORREGIDO implementacion PC, validacion PENDIENTE.
+PENDIENTES: pruebas PC y revision diff; hardware y aislamiento segun PLAN_VALIDACION. Comandos Raspberry del plan son sugeridos NO ejecutados; commit/push/pull Raspberry no ejecutados.
+ESTADO: PENDIENTE validacion PC y Raspberry.
+
+### Validacion final PROMPT 009
+
+CONFIRMADO: `python -m unittest discover -s tests -v`: 43 tests OK (3.048 s), incluidos 10 nuevos UPS. `node --check dashboard/static/js/dashboard.js`: codigo 0, salida vacia. `git diff --check`: sin errores, advertencias LF/CRLF. Cobertura: signed 0xFFF8=-8 mA, estados/celdas/delta/umbrales, ausente/OSError/incompleta/timeout, cache API/WS e independencia ante UPS lenta; hardware simulado, sin evidencia RF operacional.
+CONFIRMADO: `.git/dashboard-review-009/visual_check.py`: 8 comprobaciones OK. Uvicorn loopback real y muestreador spawn: /api/ups HTTP 200 UNKNOWN por ModuleNotFoundError (smbus ausente en PC), DB ausente no creada. Fixtures UPS exclusivamente en navegador: resumen/sistema 1366, 390 y 320 px sin overflow, celdas 4 escritorio y 2x2 movil; WARNING/LOW/CRITICAL y muestra obsoleta UNKNOWN sin celdas. Cero errores JS y solicitudes externas. Uvicorn/Chrome cerrados y temporales eliminados. Capturas sinteticas NO son mediciones; inspeccionadas con view_image sistema movil y resumen escritorio. Evidencia administrativa en .git/dashboard-review-009/result.json y fixture-*.png, fuera de commits.
+ERROR / CORREGIDO: primera comprobacion binaria contra HEAD fallo en AGENTS.md por finales CRLF/LF; no era modificacion del contenido. Repetida con normalizacion de finales para texto: archivos protegidos (lorawan_queue.py, AGENTS.md, unidad, requirements) identicos a HEAD; logo comparado byte por byte identico. Diff de protegidos vacio. Prefijos historicos de README/BITACORA/ARQUITECTURA/PLAN_VALIDACION preservados con esa misma normalizacion.
+COMANDOS EJECUTADOS adicionales: unittest, node --check (repetido tras ajuste JS), git diff --check, git diff --stat/--numstat, git --no-pager diff app/UI, git status --short, git diff --exit-code archivos protegidos, git diff --cached --exit-code (indice sin staging); Get-Content/rg CSS y JS; Get-ChildItem evidencias anteriores; scripts Python de ajuste KPI/estilo WARNING, visual_check.py con Playwright/Chrome headless existente, view_image dos capturas; scripts Python de comparacion con git show HEAD, preservacion historica y guardado full.diff (incluye archivos nuevos mediante git diff --no-index -- NUL, codigo 1 esperado). Revision completa del diff final.
+RESULTADO: CORREGIDO integracion local; CONFIRMADO pruebas PC y presentacion con fixtures. Sin staging, commit/push ni despliegue.
+LIMITACIONES / PENDIENTES: Raspberry, hardware real, import smbus en interprete del servicio y permisos i2c, coste spawn y tiempos, aislamiento LoRaWAN/TTN/servicios y contraste VBUS/celdas PENDIENTES. Autonomia no validada, potencia CALCULADA, alarmas visuales. Sin acciones de apagado, sin escrituras I2C, sin cambios ups.py original ni DB operacional. Comandos remotos del plan sugeridos NO ejecutados.
+ESTADO: CONFIRMADO en PC; PENDIENTE validacion Raspberry.
+LISTO PARA VALIDACIÓN EN RASPBERRY

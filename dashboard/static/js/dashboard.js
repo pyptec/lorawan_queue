@@ -156,6 +156,7 @@ function queueStat(label, value, status = "") {
 }
 function renderKpis(data, stale) {
   const system = data.system || {}, queue = data.queue || {}, summary = queue.summary || {}, internet = data.internet || {}, gateway = data.gateway || {};
+  const ups = upsValue(data, stale);
   const qKnown = queue.state === "OK";
   const devices = Array.isArray(data.devices) ? data.devices : [];
   const identities = new Set(devices.map(item => item.identity).filter(Boolean));
@@ -170,6 +171,7 @@ function renderKpis(data, stale) {
     kpi("Cola local", "database", pending, queue.state === "OK" ? "SQLite · uplinks persistidos" : "DB: NO DISPONIBLE", qKnown ? "" : "UNKNOWN", queueInfo),
     kpi("Internet", "internet", badge(stale ? "UNKNOWN" : state(internet.state)), "Pruebas DNS + TCP externo", stale ? "UNKNOWN" : state(internet.state)),
     kpi("TTN / servidor", "cloud", badge(stale ? "UNKNOWN" : state(gateway.ttn?.state)), "Evidencia PUSH_ACK UDP", stale ? "UNKNOWN" : state(gateway.ttn?.state)),
+    kpi("UPS", ups.charge_state?.includes("CHARGING") && ups.charge_state !== "DISCHARGING" ? "battery-charging" : "battery", ups.state === "OK" ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN", ups.charge_state || "UNKNOWN", ups.battery_state || "UNKNOWN"),
     kpi("Temperatura CPU", "thermometer", numeric(system.temperature_c, " °C"), validNumber(system.temperature_c) ? "Temperatura del sistema" : "Fuente térmica no disponible", tempState)
   );
 }
@@ -368,7 +370,7 @@ function render(data, stale = false) {
   $("system-time").textContent = time ? dateText(data.system.time) : "—";
   $("mobile-system-time").textContent = time ? dateText(data.system.time) + " · UTC−5" : "Hora no disponible";
   $("system-date").textContent = time ? time.toLocaleDateString("es-CO", {timeZone: "America/Bogota", day: "2-digit", month: "short", year: "numeric"}) : "Hora del sistema no disponible";
-  renderKpis(data, stale); renderFlow(data, stale); renderSystem(data, stale); renderQueueSummary(data.queue || {}); renderAlert(data, stale);
+  renderUPS(data, stale); renderKpis(data, stale); renderFlow(data, stale); renderSystem(data, stale); renderQueueSummary(data.queue || {}); renderAlert(data, stale);
   const stamp = data.updated_at?.queue ?? JSON.stringify([data.queue, data.devices]);
   if (stamp !== queueStamp) { queueStamp = stamp; renderDevices(data); renderQueueTable(data.queue || {}); currentEvents = eventsFromRows(Array.isArray(data.queue?.rows) ? data.queue.rows : []); renderEvents(); }
 }
@@ -386,3 +388,36 @@ function connect() {
 render({health: "UNKNOWN", queue: {state: "UNKNOWN", rows: []}, devices: [], services: [], internet: {state: "UNKNOWN"}});
 goTo("overview");
 connect();
+
+// UPS freshness is independent of the other source timestamps.
+function upsValue(data, stale) {
+  const ups = data.ups || {};
+  const fresh = validNumber(ups.sampled_at) && Date.now() / 1000 - ups.sampled_at <= 20 && Date.now() / 1000 >= ups.sampled_at - 5;
+  return !stale && fresh && ups.state === "OK" ? ups : {state: "UNKNOWN", battery_state: "UNKNOWN", charge_state: "UNKNOWN"};
+}
+function renderUPS(data, stale) {
+  const ups = upsValue(data, stale), known = ups.state === "OK";
+  const power = ups.external_power === true ? "PRESENT" : ups.external_power === false ? "NOT_PRESENT" : "UNKNOWN";
+  const overview = [["UPS · Batería", known ? numeric(ups.battery_percent, " %", 0) : "UNKNOWN"], ["Voltaje pack", numeric(ups.battery_voltage_mv / 1000, " V", 3)], ["Corriente", numeric(ups.battery_current_ma, " mA")], ["Estado de carga", state(ups.charge_state)], ["Alimentación externa", power], ["Desbalance de celdas", numeric(ups.cell_delta_mv, " mV", 0)]];
+  $("ups-overview").replaceChildren(detailList(overview));
+  $("ups-cells").replaceChildren();
+  $("ups-cell-summary").replaceChildren();
+  if (!known) {
+    $("ups-detail").replaceChildren(empty("UPS no disponible", "Sin lectura I²C válida en 0x2d · UNKNOWN", "battery"));
+    return;
+  }
+  $("ups-detail").replaceChildren(detailList([
+    ["Estado batería", badge(ups.battery_state)], ...overview,
+    ["Potencia batería · CALCULADA", numeric(ups.battery_power_mw, " mW")],
+    ["Capacidad restante", numeric(ups.remaining_capacity_mah, " mAh", 0)],
+    ["VBUS Voltage", numeric(ups.vbus_voltage_mv, " mV")], ["VBUS Current", numeric(ups.vbus_current_ma, " mA")], ["VBUS Power", numeric(ups.vbus_power_mw, " mW")],
+    ["Estimación IC · valor instantáneo del fuel gauge", numeric(ups.runtime_to_empty_min, " min", 0)],
+    ["Tiempo a carga completa · IC", numeric(ups.time_to_full_min, " min", 0)], ["Última muestra UPS", dateText(ups.sampled_at, true)]
+  ]));
+  (Array.isArray(ups.cells_mv) ? ups.cells_mv : []).forEach((mv, i) => {
+    const cell = element("div", "ups-cell");
+    cell.append(icon("battery"), element("strong", "", "C" + (i + 1)), element("span", "", numeric(mv / 1000, " V", 3)));
+    $("ups-cells").append(cell);
+  });
+  $("ups-cell-summary").append(detailList([["Mínimo", numeric(ups.cell_min_mv, " mV", 0)], ["Máximo", numeric(ups.cell_max_mv, " mV", 0)], ["Delta", numeric(ups.cell_delta_mv, " mV", 0)], ["Balance · criterio visual del dashboard", badge(ups.cell_balance_state)]]));
+}

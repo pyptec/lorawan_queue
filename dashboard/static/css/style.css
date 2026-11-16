@@ -1914,3 +1914,17 @@ body.menu-open .sidebar {
   .flow-link:nth-child(6) .icon { transform:rotate(180deg); }
   .flow-step:nth-child(7) { grid-column:1; grid-row:3; }
 }
+
+/* UPS: same local palette; cells reflow without external resources. */
+#ups-overview { margin-top:12px; border-top:1px solid #e5ebed; }
+.ups-panel h3 { display:flex; align-items:center; gap:10px; }
+.ups-panel h3 .icon { color:#6BA425; }
+.ups-cells { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:22px 0; }
+.ups-cell { background:#F5F7F8; border:1px solid #A6CE39; border-radius:12px; padding:18px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.ups-cell .icon { width:56px; height:38px; color:#6BA425; }
+.kpi[data-state="LOW"], .badge[data-state="LOW"] { color:#b1812d; background:#fff5df; }
+.badge[data-state="ATTENTION"] { color:#b1812d; background:#fff5df; }
+@media(max-width:740px) { .ups-cells { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } }
+@media(max-width:360px) { .ups-panel .panel-heading { flex-wrap:wrap; } }
+
+.kpi[data-state="WARNING"] .icon-tile,.kpi[data-state="LOW"] .icon-tile { color:#b1812d; background:#fff5df; }

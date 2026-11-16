@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from . import queue_monitor, system_monitor, gateway_monitor
+from . import queue_monitor, system_monitor, gateway_monitor, ups_monitor
 
 ROOT = Path(__file__).parent
 DB_PATH = os.environ.get("DASHBOARD_DB_PATH", "/home/pi/lorawan_queue/lorawan_queue.db")
@@ -58,11 +58,12 @@ async def poll(app, read=collect, section=None, interval=10):
 async def lifespan(app):
     app.state.snapshot = {"health": "DEGRADED", "state": "UNKNOWN", "sampled_at": None,
         "queue": {"state": "UNKNOWN", "rows": [], "devices": []}, "devices": [],
-        "internet": {"state": "UNKNOWN"}, "services": []}
+        "internet": {"state": "UNKNOWN"}, "services": [], "ups": ups_monitor.unknown()}
     tasks = [asyncio.create_task(poll(app, collect)),
              asyncio.create_task(poll(app, system_monitor.snapshot, "system", 5)),
              asyncio.create_task(poll(app, gateway_monitor.services, "services", 15)),
-             asyncio.create_task(poll(app, gateway_monitor.internet, "internet", 15))]
+             asyncio.create_task(poll(app, gateway_monitor.internet, "internet", 15)),
+             asyncio.create_task(poll(app, ups_monitor.snapshot, "ups", 5))]
     try:
         yield
     finally:
@@ -89,7 +90,7 @@ def endpoint(section):
         return app.state.snapshot.get(section, {"state": "UNKNOWN"})
     return get_section
 
-for section in ("system", "queue", "devices", "gateway", "services"):
+for section in ("system", "queue", "devices", "gateway", "services", "ups"):
     app.add_api_route("/api/" + section, endpoint(section), methods=["GET"])
 
 

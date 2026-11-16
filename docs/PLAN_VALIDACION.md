@@ -135,3 +135,12 @@ Validar cinco vistas en 1920x1080, 1366x768, tablet 900x1000, móvil 390x844 y 3
 Pruebas transitorias: fixture ficticia SQLite y control de red en TemporaryDirectory fuera del repositorio, Uvicorn loopback y navegador Chrome headless; las capturas fixture-* no acreditan operación Raspberry. Comprobar API HTTP 200, mensajes WS, transición OFFLINE/ONLINE con y sin pendientes, reconexión, DOM sin inyección HTML, hash DB de fixture sin cambios atribuibles al dashboard y hash del logo idéntico. Herramienta administrativa y evidencias locales en .git/dashboard-review-008, fuera de commits. Sin agregar dependencias frontend.
 
 Ejecutar unittest, node --check y git diff --check; comprobar backend/proxy intactos y ausencia de .db/.db-journal/.db-wal/.db-shm residuales. Raspberry, navegación LAN real, hardware, servicios reales y carga de renderización en Raspberry permanecen PENDIENTES. El rediseño no cierra ninguna fase operacional anterior.
+
+
+## PROMPT 009 - Validacion UPS
+
+PENDIENTE hardware. PC: python -m unittest discover -s tests -v; node --check dashboard/static/js/dashboard.js; git diff --check. Tests SMBus simulado, sin /dev/i2c-1; signed 0xFFF8=-8, estados/celdas/delta, umbrales, ausente, error, incompleta, timeout y aislamiento de cache/API/WS. Pruebas PC no acreditan electricidad, firmware ni aislamiento RF.
+
+Comandos Raspberry sugeridos NO ejecutados: despues de revision, commit/push PC y pull Raspberry, `sudo i2cdetect -y 1` (esperado 2d); comprobar import smbus en interprete de dashboard.service y permisos i2c; `curl -s http://127.0.0.1:8080/api/ups`; abrir http://192.168.5.169:8080. Contrastar con lectura original existente sin modificar ups.py. Comprobar valores reales, carga/descarga, alimentacion externa y celdas; no asumir umbrales oficiales. Observar muestreo/CPU/procesos hijos y recuperacion ante errores I2C seguros, sin desconexion electrica en caliente ni acciones de apagado.
+
+Comando sugerido NO ejecutado: `systemctl is-active lorawan-queue.service ttn-gateway.service dashboard.service`. Correlacionar Pending, Sent, PUSH_ACK y latencia/control mientras UPS muestrea; servicio activo por si solo no prueba aislamiento. PUSH_ACK solo acredita recepcion UDP. Verificar API HTTP 200 y WS con UPS ausente o smbus inaccesible; UNKNOWN sin falsos ceros y recuperacion posterior. Revisar escritorio/movil (4 celdas/2x2), estados de bateria y muestra obsoleta. No ejecutar shutdown, poweroff, i2cset ni escribir registros. No efectuar estas pruebas remotas durante la implementacion PC.
