@@ -379,3 +379,709 @@ RESULTADO: CORREGIDO integracion local; CONFIRMADO pruebas PC y presentacion con
 LIMITACIONES / PENDIENTES: Raspberry, hardware real, import smbus en interprete del servicio y permisos i2c, coste spawn y tiempos, aislamiento LoRaWAN/TTN/servicios y contraste VBUS/celdas PENDIENTES. Autonomia no validada, potencia CALCULADA, alarmas visuales. Sin acciones de apagado, sin escrituras I2C, sin cambios ups.py original ni DB operacional. Comandos remotos del plan sugeridos NO ejecutados.
 ESTADO: CONFIRMADO en PC; PENDIENTE validacion Raspberry.
 LISTO PARA VALIDACIÓN EN RASPBERRY
+
+
+# PROMPT 010 — Corrección backend SMBus UPS
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: INGENIERO SENIOR DE SOFTWARE EMBEBIDO, RASPBERRY PI, FASTAPI, I2C/SMBUS, LORAWAN, SYSTEMD, GIT Y VALIDACIÓN DE SISTEMAS INDUSTRIALES.
+TAREA GENERAL: TAREA 010.00 — CORREGIR LA DEPENDENCIA SMBUS DEL MONITOR UPS HAT E.
+FORMATO: tareas numeradas con OBJETIVO, ACCIÓN, EVIDENCIA, RESULTADO, ESTADO, ARCHIVOS AFECTADOS y OBSERVACIONES. Estados especificos solicitados por PROMPT 010.
+PROMPT RECIBIDO: adjunto Pasted text.txt de 6afe2712-fcef-4126-9738-9e195672571a; cambiar import a smbus2 y pin 0.6.1, validar PC, commit/push y despliegue Git a Raspberry sin cambios permanentes remotos.
+ARCHIVOS CONSULTADOS: adjunto, AGENTS.md, dashboard/ups_monitor.py, tests/test_ups_monitor.py, requirements.txt, requirements-dev.txt, deploy/dashboard.service, BITACORA.md (final); configuracion SSH solo campos HostName/User, y fuente instalada smbus2.py para diagnostico fcntl.
+ARCHIVOS MODIFICADOS: dashboard/ups_monitor.py, requirements.txt, BITACORA.md.
+COMANDOS EJECUTADOS: Get-Content anteriores; git status/--short, branch --show-current, log -1 --oneline, remote -v; rg --files y rg -n fuentes/dependencias/signed16/imports; python import smbus2 (antes y despues de instalacion), pip install smbus2==0.6.1, importlib.metadata version e inspeccion fuente instalada; unittest discover; node --check; git diff --check/--numstat/--exit-code/archivos; Test-Path y Select-String de campos SSH no secretos; ssh con verificacion estricta (rechazado); Get-Command wsl, wsl --list --quiet, import WSL sin ruta (fallo) y con sys.path.append a paquete instalado (exito); llamada UPSMonitor.read nativa devuelve UNKNOWN; scripts Python de sustitucion minima y append de bitacora. Comandos posteriores se registraran con su evidencia.
+DECISIÓN: no alterar logica por la incompatibilidad Windows de fcntl; confirmar import real en Linux/WSL del PC con mismo paquete puro Python 0.6.1. No eludir identidad SSH cambiada; esperar verificacion del usuario antes del despliegue.
+VALIDACIÓN: 43 pruebas PC; no acredita hardware ni Raspberry.
+RESULTADO/ESTADO GENERAL: CONFIRMADO cambio y pruebas PC; Windows import ERROR por fcntl; despliegue PENDIENTE.
+PENDIENTES: commit/push y validacion remota por tareas; no afirmar cierre global.
+
+## TAREA 010.01 — ESTADO INICIAL
+
+OBJETIVO:
+Revisar repositorio.
+
+ACCIÓN:
+git status; git branch --show-current; git log -1 --oneline.
+
+EVIDENCIA:
+main; 76c90f1 Integrate UPS HAT E monitoring into LoRaWAN dashboard; working tree clean; sincronizado segun refs locales.
+
+RESULTADO:
+Sin cambios previos.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No se sobrescribieron cambios.
+
+## TAREA 010.02 — LOCALIZACIÓN DEL ERROR
+
+OBJETIVO:
+Localizar import antiguo.
+
+ACCIÓN:
+rg -n smbus/SMBus sobre Python de dashboard; lectura del monitor.
+
+EVIDENCIA:
+dashboard/ups_monitor.py:25: from smbus import SMBus.
+
+RESULTADO:
+Import identificado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Problema Raspberry aportado por usuario; no reproducido remotamente.
+
+## TAREA 010.03 — CORRECCIÓN SMBUS2
+
+OBJETIVO:
+Migrar solo acceso SMBus.
+
+ACCIÓN:
+Sustitucion binaria de una cadena; git diff.
+
+EVIDENCIA:
+Una linea cambia from smbus import SMBus por from smbus2 import SMBus.
+
+RESULTADO:
+Cambio minimo realizado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+dashboard/ups_monitor.py
+
+OBSERVACIONES:
+Sin modificar otra logica UPS.
+
+## TAREA 010.04 — CONSERVAR SIGNED16
+
+OBJETIVO:
+Conservar corriente negativa.
+
+ACCIÓN:
+rg de formula y prueba existente.
+
+EVIDENCIA:
+Linea 45 conserva resta 0x10000; test 0xFFF8=-8 OK.
+
+RESULTADO:
+Signed16 preservado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No usar 0xFFFF como ajuste.
+
+## TAREA 010.05 — DECLARAR DEPENDENCIA
+
+OBJETIVO:
+Fijar version reproducible.
+
+ACCIÓN:
+rg --files requirements/pyproject; lectura de ambos requirements; agregar pin.
+
+EVIDENCIA:
+requirements.txt:5: smbus2==0.6.1; requirements-dev incluye requirements.txt.
+
+RESULTADO:
+Declarada una sola vez.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+requirements.txt
+
+OBSERVACIONES:
+No agregar smbus ni cambiar otras dependencias.
+
+## TAREA 010.06 — IMPORT SMBUS2
+
+OBJETIVO:
+Validar import sin hardware.
+
+ACCIÓN:
+python -m pip install smbus2==0.6.1; import nativo; inspeccion local de paquete; comprobacion WSL.
+
+EVIDENCIA:
+Instalacion Windows exitosa 0.6.1; import Windows falla ModuleNotFoundError fcntl; paquete importa from fcntl import ioctl. Ubuntu/WSL: smbus2 OK, version=0.6.1, platform=linux.
+
+RESULTADO:
+Import confirmado en Linux/WSL del PC; limitacion Windows registrada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO del repositorio
+
+OBSERVACIONES:
+WSL lee paquete puro Python instalado en Windows mediante sys.path.append; no mock fcntl, no hardware y no prueba del venv Raspberry. WSL intento inicial sin ruta fallo por smbus2 ausente. Monitor nativo devuelve UNKNOWN sin excepcion saliente.
+
+## TAREA 010.07 — PRUEBAS PYTHON
+
+OBJETIVO:
+Comprobar regresiones locales.
+
+ACCIÓN:
+python -m unittest discover -s tests -v.
+
+EVIDENCIA:
+Ran 43 tests in 5.013s; OK; 0 failures, 0 errors.
+
+RESULTADO:
+Suite completa pasa.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Aviso asyncio de callback 0.109 s; no fallo. Tests usan mocks/fixtures temporales, no produccion.
+
+## TAREA 010.08 — PRUEBA SIGNED16
+
+OBJETIVO:
+Comprobar 0xFFF8=-8.
+
+ACCIÓN:
+Ejecutar test existente en suite.
+
+EVIDENCIA:
+test_signed_fff8_and_positive_boundaries (test_ups_monitor.UPSTests) ... ok.
+
+RESULTADO:
+Conversion conservada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No se agregaron ni duplicaron tests.
+
+## TAREA 010.09 — VALIDACIÓN JAVASCRIPT
+
+OBJETIVO:
+Comprobar sintaxis.
+
+ACCIÓN:
+node --check dashboard/static/js/dashboard.js.
+
+EVIDENCIA:
+Sin salida ni error.
+
+RESULTADO:
+Sintaxis correcta.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Frontend intacto.
+
+## TAREA 010.10 — ELIMINAR REFERENCIA SMBUS ANTIGUA
+
+OBJETIVO:
+Verificar migracion del codigo.
+
+ACCIÓN:
+rg -n de from smbus import o import smbus y de smbus2, limitado a fuentes Python.
+
+EVIDENCIA:
+Sin import antiguo; smbus2 en ups_monitor.py:25.
+
+RESULTADO:
+Migracion completada en codigo.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Se conserva historia documental smbus de PROMPT 009; no buscar binarios __pycache__ como fuente.
+
+## TAREA 010.11 — PROTEGER LORAWAN
+
+OBJETIVO:
+Comprobar codigo critico intacto.
+
+ACCIÓN:
+git diff -- lorawan_queue.py; git diff --exit-code para archivos protegidos.
+
+EVIDENCIA:
+Sin salida; codigo 0. app, static, templates, tests, AGENTS, README, docs y deploy sin diff.
+
+RESULTADO:
+LoRaWAN no modificado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No prueba aislamiento operacional.
+
+## TAREA 010.12 — GIT DIFF
+
+OBJETIVO:
+Auditar alcance.
+
+ACCIÓN:
+git status --short; git diff --numstat; git --no-pager diff; git diff --check.
+
+EVIDENCIA:
+Antes de bitacora: ups_monitor.py 1 insercion/1 eliminacion; requirements.txt 1 insercion; sin nuevos/eliminados.
+
+RESULTADO:
+Diff minimo, sin errores whitespace.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Bitacora se agrega como tercer archivo; sin DB, venv, capturas ni fixtures versionados.
+
+## TAREA 010.13 — BITÁCORA
+
+OBJETIVO:
+Agregar PROMPT 010 acumulativo.
+
+ACCIÓN:
+Append de esta seccion y comparacion binaria del prefijo anterior.
+
+EVIDENCIA:
+Historia guardada para comprobacion en .git/prompt010-bitacora-before.bin; resultado de verificacion en salida del comando.
+
+RESULTADO:
+Tareas con todos los campos y limites explicitos.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+No se cambia README ni docs para mantener alcance minimo; esta seccion actualiza referencia historica a smbus2.
+
+## TAREA 010.14 — REVISIÓN PRE-COMMIT
+
+OBJETIVO:
+Revisar antes del staging.
+
+ACCIÓN:
+git status; git --no-pager diff; git diff --check.
+
+EVIDENCIA:
+Revisar tres archivos exactos: dashboard/ups_monitor.py, requirements.txt, BITACORA.md.
+
+RESULTADO:
+Revision antes del commit; resultado en continuacion.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No incluir otros archivos.
+
+## TAREA 010.15 — STAGING Y COMMIT
+
+OBJETIVO:
+Crear commit trazable en PC.
+
+ACCIÓN:
+Sugeridos, aun NO ejecutados: git add de los tres archivos; git commit -m "Fix UPS monitoring to use smbus2".
+
+EVIDENCIA:
+Sin hash aun.
+
+RESULTADO:
+Se registrara evidencia despues del comando.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Los tres archivos previstos
+
+OBSERVACIONES:
+No ejecutar Git de escritura en Raspberry.
+
+## TAREA 010.16 — PUSH
+
+OBJETIVO:
+Publicar main desde PC.
+
+ACCIÓN:
+Sugerido aun NO ejecutado: git push origin main; git status.
+
+EVIDENCIA:
+Sin salida de push aun.
+
+RESULTADO:
+Se registrara despues del commit.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No declarar publicacion sin evidencia.
+
+## TAREA 010.17 — ESTADO PRE-PULL RASPBERRY
+
+OBJETIVO:
+Inspeccionar repo remoto.
+
+ACCIÓN:
+Intento SSH BatchMode, ConnectTimeout=5, StrictHostKeyChecking=yes a pi@192.168.5.169 con git status/branch/log remotos.
+
+EVIDENCIA:
+Host key verification failed: clave ED25519 distinta a known_hosts; huella presentada SHA256:v3O5UkZrgKm/ve9C3I2zH1xv8x92A39XW7tkkqvUcUM.
+
+RESULTADO:
+SSH no ejecuto comandos remotos.
+
+ESTADO:
+BLOQUEADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Se solicito verificacion directa de huella y autorizacion para actualizar entrada. No se borro known_hosts ni se desactivo verificacion.
+
+## TAREA 010.18 — PULL RASPBERRY
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y comprobar import.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.19 — DEPENDENCIA RASPBERRY
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: venv/bin/python -m pip install -r requirements.txt y probar import/version.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.20 — EVIDENCIA I2C
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: sudo i2cdetect -y 1.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.21 — REINICIO DASHBOARD
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: sudo systemctl restart dashboard.service y status.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.22 — LOGS
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: journalctl dashboard desde reinicio; no publicar datos sensibles.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.23 — API UPS REAL
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl -s http://127.0.0.1:8080/api/ups.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.24 — COMPARACIÓN CON UPS.PY
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: Inspeccionar primero script original en solo lectura; NO ejecutarlo si contiene apagados/escrituras; comparar solo fuente segura autorizada.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.25 — VALIDACIÓN VISUAL
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: Abrir dashboard LAN y contrastar valores reales.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.26 — SERVICIOS
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl is-active ttn-gateway.service lorawan-queue.service dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.27 — COLA LORAWAN
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: sqlite3 -readonly /home/pi/lorawan_queue/lorawan_queue.db SELECT status, COUNT(*) FROM uplink_queue GROUP BY status;.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.28 — NO REGRESIÓN
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: Correlacionar evidencia RF/TTN/fast-path/PUSH_ACK/cola/AP/SSH; estados activos y conteos solos no acreditan no regresion.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.29 — REGISTRO DE VALIDACIÓN RASPBERRY
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: Agregar evidencia real solo en bitacora PC.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.
+
+## TAREA 010.30 — CIERRE FINAL
+
+OBJETIVO:
+Validar/desplegar en orden segun PROMPT 010.
+
+ACCIÓN:
+Sugerido NO ejecutado: Commit/push documental PC y pull Raspberry despues de validacion real.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+No realizado por identidad SSH pendiente.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+No editar fuentes/bitacora en Raspberry, ni commit/push alli; no tocar UPS original, DB ni LoRaWAN.

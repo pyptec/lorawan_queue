@@ -22,7 +22,7 @@ class UPSMonitor:
         try:
             factory = self.bus_factory
             if factory is None:
-                from smbus import SMBus
+                from smbus2 import SMBus
                 factory = SMBus
             bus = factory(1)
             flags = bus.read_byte_data(self.ADDRESS, 0x02)
