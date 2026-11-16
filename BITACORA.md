@@ -4155,3 +4155,81 @@ NINGUNO
 
 OBSERVACIONES:
 Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+### Actualización posterior al commit — PROMPT 013
+
+## TAREA 013.31 — COMMIT (actualización)
+
+OBJETIVO:
+Versionar alias desde PC.
+
+ACCIÓN:
+Revisión final programática de 13 paths, SQL/agrupación sin cambios, protegidos e historia; git diff --check; staging explícito; git diff --cached --check/--stat; git commit -m "Add LoRaWAN device aliases to dashboard".
+
+EVIDENCIA:
+f95c1da Add LoRaWAN device aliases to dashboard; 13 archivos, 1547 inserciones y 7 eliminaciones; 4 nuevos archivos (JSON/resolver/dos tests).
+
+RESULTADO:
+Corrección versionada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+13 archivos explícitos.
+
+OBSERVACIONES:
+Evidencia PC distinta de operación Raspberry. Sin nuevas asociaciones físicas, sin modificar archivos remotos.
+
+## TAREA 013.32 — PUSH (actualización)
+
+OBJETIVO:
+Publicar configuración/código/docs.
+
+ACCIÓN:
+git push origin main; git status; git log -1 --oneline.
+
+EVIDENCIA:
+326a122..f95c1da main -> main; Your branch is up to date with origin/main; nothing to commit, working tree clean.
+
+RESULTADO:
+Alias disponibles en origen.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional de código.
+
+OBSERVACIONES:
+Evidencia PC distinta de operación Raspberry. Sin nuevas asociaciones físicas, sin modificar archivos remotos.
+
+## TAREA 013.33 — ESTADO PRE-PULL RASPBERRY (actualización)
+
+OBJETIVO:
+Inspeccionar repositorio remoto antes de pull.
+
+ACCIÓN:
+ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes pi@192.168.2.129 con consulta git status/branch/log en /home/pi/lorawan_queue.
+
+EVIDENCIA:
+Permission denied (publickey,password), código 1.
+
+RESULTADO:
+No autenticó; no ejecutó comandos remotos.
+
+ESTADO:
+BLOQUEADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO remoto.
+
+OBSERVACIONES:
+Evidencia PC distinta de operación Raspberry. Sin nuevas asociaciones físicas, sin modificar archivos remotos.
+
+COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (NO ejecutados aún al escribir): git diff --check; git add -- BITACORA.md; git commit -m "Document PC LoRaWAN alias validation and pending deployment"; git push origin main; git status; git log -2 --oneline; git ls-remote origin refs/heads/main; git diff 326a122 HEAD --name-status; git diff 326a122 HEAD -- lorawan_queue.py dashboard/ups_monitor.py dashboard/app.py dashboard/device_decoder.py requirements.txt; git diff 326a122 HEAD --check. Su resultado y hash final se presentan con evidencia de herramienta en respuesta. Este commit documental registra PC, NO cierra TAREA 013.47 de validación real, que permanece PENDIENTE.
+RESULTADO: PROMPT 013 — CONFIRMADO EN PC; tres alias configurados, resolución backend/nombre primero/desconocidos implementados, 76 tests OK sin duplicados ni skips; UPS y LoRaWAN core intactos, DB operacional no tocada, commit/push realizados.
+IDENTIFICADORES: DevEUI visible solo cuando lo aporta el frame/objeto observado; Device ID TTN aún no existe como observación en decoder; alias_* son configuración explícita. QALCOSONIC puede coincidir con DevAddr histórico aportado; LILYGO/Dragino no se reconocen por FPort ni se inventa DevAddr. Join Requests pueden resolverse por EUI; no asociación automática con sesión posterior.
+VALIDACIÓN API/WS/UI: CONFIRMADO en PC con fixtures de frames y SQLite temporal, nombres/técnicos preservados; PENDIENTE Raspberry. Capturas administrativas no equivalen a identidad física o tráfico real.
+PENDIENTES: 013.33–013.48 por falta de acceso SSH y evidencia real; no pull/restart/curl/WS/lectura SQLite/journal remotos ejecutados. No se borró .venv/ ni ttn_iotrack_receiver.py ni se modificaron SSH/TTN/RF/UPS/LoRaWAN. Servicios activos/conteos aislados no acreditan no regresión operacional.
+ESTADO: CONFIRMADO EN PC; PENDIENTE VALIDACIÓN REAL RASPBERRY.
