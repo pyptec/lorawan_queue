@@ -1869,3 +1869,80 @@ NINGUNO
 
 OBSERVACIONES:
 Sin cambios Raspberry; no afirmar despliegue ni operacion. No borrar archivos remotos.
+
+### Continuación de evidencia PC — PROMPT 011
+
+## TAREA 011.15 — REVISIÓN PRE-COMMIT (actualización)
+
+OBJETIVO:
+Concluir revisión de alcance.
+
+ACCIÓN:
+Script Python comparó JS exacto contra HEAD permitiendo solo eliminación de const fresh, eliminación de && fresh y comentario; lista de archivos tracked/untracked; comparación de backend/proxy/requirements/AGENTS/HTML/CSS; prefijo binario de bitácora; git diff --check.
+
+EVIDENCIA:
+CONFIRMADO: diff JS exacto, tres archivos, backend/LoRaWAN/UI intactos, historia preservada. Sin whitespace errors; solo advertencia LF/CRLF documental.
+
+RESULTADO:
+Revisión completada antes del staging.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional.
+
+OBSERVACIONES:
+Se revisó diff completo del test nuevo mediante git diff --no-index -- NUL tests/test_ups_frontend.py; código 1 esperado por diferencias, no error de prueba.
+
+## TAREA 011.16 — COMMIT (actualización)
+
+OBJETIVO:
+Versionar corrección local.
+
+ACCIÓN:
+git add -- dashboard/static/js/dashboard.js tests/test_ups_frontend.py BITACORA.md; git diff --cached --stat; git commit -m "Fix UPS frontend false UNKNOWN state".
+
+EVIDENCIA:
+4f96cc1 Fix UPS frontend false UNKNOWN state; 3 archivos: BITACORA.md 708 líneas añadidas; JS 2 inserciones/3 eliminaciones; test nuevo 92 líneas. Total 802 inserciones/3 eliminaciones.
+
+RESULTADO:
+Corrección versionada desde PC.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS, BITACORA y tests/test_ups_frontend.py.
+
+OBSERVACIONES:
+Sin otros cambios permanentes; capturas y prefijo previo permanecen en .git fuera de commits.
+
+## TAREA 011.17 — PUSH (actualización)
+
+OBJETIVO:
+Publicar corrección.
+
+ACCIÓN:
+git push origin main; git status; git log -1 --oneline.
+
+EVIDENCIA:
+c79616c..4f96cc1 main -> main; Your branch is up to date with origin/main; nothing to commit, working tree clean.
+
+RESULTADO:
+Corrección publicada y PC limpio tras push.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO de código adicional.
+
+OBSERVACIONES:
+Se publica esta evidencia posterior mediante commit documental separado; no es cierre de la validación Raspberry de TAREA 011.29, que permanece PENDIENTE.
+
+COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (NO ejecutados aún al escribir): git diff --check; git add -- BITACORA.md; git commit -m "Document UPS frontend validation"; git push origin main; git status; git log -2 --oneline; git ls-remote origin refs/heads/main; comprobación de archivos modificados y protegidos contra baseline c79616c. Resultados finales y hash documental se presentan con evidencia de herramientas en respuesta.
+RESULTADO: CONFIRMADO corrección mínima y evidencia visual sintética PC; 47 tests OK, sin skips; backend/LoRaWAN sin cambios de código.
+PENDIENTES: identidad SSH 192.168.5.169 pendiente de verificar y autenticación 192.168.2.129 rechazada; no se ejecutó pull/restart/curl/WS/consulta SQLite en Raspberry. Datos reales y no regresión operacional PENDIENTES.
+ESTADO GENERAL: PROMPT 011 — CONFIRMADO EN PC; TAREAS 011.01–011.17 confirmadas; TAREAS 011.18–011.30 pendientes de validación Raspberry.
+LISTO PARA GIT PULL EN RASPBERRY cuando exista acceso verificado y estado remoto apto. No declarar cierre global sin evidencia visual real final.
