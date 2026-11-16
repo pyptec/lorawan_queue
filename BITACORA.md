@@ -4233,3 +4233,1152 @@ IDENTIFICADORES: DevEUI visible solo cuando lo aporta el frame/objeto observado;
 VALIDACIÓN API/WS/UI: CONFIRMADO en PC con fixtures de frames y SQLite temporal, nombres/técnicos preservados; PENDIENTE Raspberry. Capturas administrativas no equivalen a identidad física o tráfico real.
 PENDIENTES: 013.33–013.48 por falta de acceso SSH y evidencia real; no pull/restart/curl/WS/lectura SQLite/journal remotos ejecutados. No se borró .venv/ ni ttn_iotrack_receiver.py ni se modificaron SSH/TTN/RF/UPS/LoRaWAN. Servicios activos/conteos aislados no acreditan no regresión operacional.
 ESTADO: CONFIRMADO EN PC; PENDIENTE VALIDACIÓN REAL RASPBERRY.
+
+
+# PROMPT 014 — Correlación de sesiones confirmadas, consolidación y flujo operacional
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: INGENIERO SENIOR DE SOFTWARE EMBEBIDO, RASPBERRY PI, FASTAPI, JAVASCRIPT, WEBSOCKET, LORAWAN, TTN, SQLITE, SYSTEMD, GIT, ARQUITECTURA EDGE, IDENTIDAD Y VALIDACIÓN INDUSTRIAL.
+TAREA GENERAL: TAREA 014.00 — CORRELACIONAR IDENTIDAD/SESIÓN SOLO DONDE EXISTA EVIDENCIA Y MEJORAR FLUJO/KPI.
+FORMATO: 49 tareas con siete campos, estados específicos de PROMPT 014.
+PROMPT RECIBIDO: adjunto 9279dd2f-8eeb-4a82-82d1-c2356e4ab957/Pasted text.txt completo; exige no inventar asociaciones, correlación automática solo si segura, consolidar historial y mejorar flujo sin afirmar RF por servicio activo.
+EVIDENCIA APORTADA: DevEUI Dragino A84041D1B186E98A y LILYGO 70B3D57ED0079EC3; DevAddr observados 260C6F49/260C7D6E/260CB888/260CE1CA/260CA3CA con puertos. NO se aporta asociación inequívoca entre esas direcciones y EUI. Se conservan sin correlacionar en config real. Se mantiene config/device_aliases.json anterior, pero alias de sesión histórico QALCOSONIC no se promueve automáticamente a identidad permanente consolidada.
+ARCHIVOS CONSULTADOS: adjunto, AGENTS.md, dashboard/device_decoder.py, device_aliases.py, queue_monitor.py, gateway_monitor.py, app.py, static/js/dashboard.js, templates/index.html; tests de alias/frontend; búsquedas dirigidas read-only en lorawan_queue.py de PULL_RESP/almacenamiento. Fuentes primarias consultadas vía web para Join Accept: LoRa Alliance TS001-1.0.4 y Semtech Learning Center (URLs en docs/FUENTES.md). No acceso TTN externo operativo ni claves.
+ARCHIVOS MODIFICADOS: config/device_sessions.json (nuevo, vacío), dashboard/device_sessions.py (nuevo), dashboard/device_decoder.py (solo mtype/frame_type), dashboard/queue_monitor.py, dashboard/app.py (resumen/caché/error/inicio), dashboard/static/js/dashboard.js, dashboard/templates/index.html (nota), README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, docs/FUENTES.md; tests/test_device_sessions.py, test_device_sessions_integration.py y test_device_sessions_frontend.py (nuevos); BITACORA.md. Sin cambios de CSS/UPS/aliasconfig/core/gateway_monitor/requirements.
+COMANDOS EJECUTADOS: Get-Content/rg de archivos anteriores; git status/--short, branch --show-current, log -3 --oneline, diff --stat/--no-pager diff/--check/protegidos; web search de especificación LoRaWAN/Join Accept y referencia Semtech; scripts Python de módulos/JSON/metadata/UI/tests/documentación; unittest de sesiones (19 tests iniciales OK), suite completa tres ejecuciones (104 inicial, 105 y 106), node --check repetido y whitespace; script de 10 capturas Chrome mediante fixture existente; view_image flujo consolidado, dispositivos desktop, flujo sin asociar y overview mobile; script append acumulativo. Revisión final/commit/push/SSH se registrarán con resultados reales, no anticipar éxito.
+CONCLUSIÓN AUDITORÍA: no hay información suficiente en Join Request+uplink para aprendizaje seguro del DevAddr asignado; Join Accept cifrado y no descifrado ni persistido por esta mejora. No agregar claves o dependencia al tráfico de control. Se implementa consolidación automática usando archivo de asociaciones confirmadas, NO aprendizaje automático desde tráfico. Una futura fuente autorizada TTN de asignaciones requeriría otra fase.
+MODELO / PERSISTENCIA: sesiones requieren confirmed true, evidencia verificable no vacía y valid_from/to con zona. Intervalos corresponden a received_at local; debe validarse dominio horario/sincronización de evidencia al configurarlos, nunca usar tmst ni presumir reloj externo equivalente. Inicio inclusivo/fin exclusivo; sin fecha válida no asociar. Solapamientos de mismo DevAddr se invalidan, reutilización no solapada se resuelve por fecha. current deriva de única sesión vigente, previous de cerradas; varias abiertas => actual null. Archivo real vacío sin vínculos ficticios, read-only por sampler, límites 64 KiB/256 registros. Sin escrituras runtime en config o DB.
+CONSOLIDACIÓN / KPI: conserva todas las observaciones de máximo 100 datagramas x64 rxpk antes de correlacionar para no perder propietarios temporales de un mismo DevAddr. Después agrupa EUI/Device ID configurado o mantiene dirección no asociada; máximo 100 filas visibles con métrica de recorte. physical_device_count significa grupos con identidad permanente según evidencia disponible, NO censo físico autenticado; sin asociar se informa separado. Alias/identificadores observados/sesión confirmada se distinguen mediante provenance. No se agrupa por nombre humano, puerto o similitud RF.
+ACTIVIDAD / FLUJO: activo significa trama de datos recibida localmente en últimos 120 s según reloj backend; no join solo ni fecha futura/antigua. Último uplink usa trama de datos (no join posterior) y se conserva fport/FCnt16/RSSI/SNR de datos; last_seen puede ser evento más reciente. FORWARDER ACTIVE refleja ActiveState, RF sigue NO VERIFICADO; cierre WS degrada ambas afirmaciones. Pending/Sent y TTN/PUSH_ACK sin cambios de lógica.
+ERROR / CORREGIDO: primera suite 104 tests tuvo 1 error de orden multi-rxpk (KeyError fport) y 1 fallo de expectativa 1150 frente al formato es-CO 1.150. Se conservó el orden rxpk original entre marcas iguales (índice ascendente) sin modificar test histórico; nuevo test frontend ajustado al formato numérico existente, sin cambiar producto. Segunda suite 105 OK en 21.160 s. Se agregó invalidación de device_summary en error/inicio de sampler y prueba explícita; final 106 tests OK en 25.446 s, sin fallos/errores/skips. No se eliminaron tests previos.
+VALIDACIÓN PC: 76 previos +30 nuevos (20 modelo/decoder/config, 4 integración/caché y 6 navegador). Casos de tres equipos/cinco sesiones, joins+uplinks, historial, direcciones reutilizadas con fechas, conflicto/expiración/fechas, configuración incompleta, desconocidos/mismo FPort sin fusión, preservación datos tras join, ausencia de aprendizaje/escrituras, hash SQLite temporal y loaders fuera de lock, API/WS, KPI/flujo/responsive/stale; UPS completo pasa. node y whitespace correctos. Browser usa Chrome/Playwright ya instalados; fixtures explícitas sin datos de producción.
+EVIDENCIA VISUAL: .git/dashboard-review-014/result.json y 10 fixture-*.png fuera de commits; overview/devices a 1366/900/390/320, flujo consolidado y sin asociar. Sin errores JS ni overflow global; registro real de sesiones permanece vacío. Inspección view_image confirma 3 ACTIVOS y FORWARDER ACTIVE / RF NO VERIFICADO en fixture, y 2 IDENTIDADES RECIENTES sin asociaciones. Esas capturas NO prueban estado operativo real. Navegador cerrado.
+RESULTADO: CONFIRMADO en PC modelo/consolidación condicionada a evidencia y mejoras de flujo; aprendizaje desde tráfico NO disponible por límite de protocolo/fuentes.
+LIMITACIONES / PENDIENTES: asociaciones reales DevEUI-260C... aún faltan; no puede afirmarse eliminación de todas las duplicaciones en datos reales hasta aportarlas. Snapshot acotado no es historial completo ni censo de todos los equipos; recepción local no acredita RF actual, aceptación LoRaWAN ni entrega de integración. Sin acceso Raspberry reciente, antecedentes SSH rechazado/clave cambiada siguen sin eludir. No editar fuente/remover untracked/commit/push en Raspberry.
+
+## TAREA 014.01 — BASELINE
+
+OBJETIVO:
+Establecer baseline.
+
+ACCIÓN:
+git status; branch --show-current; log -3.
+
+EVIDENCIA:
+main; 80ceba0; working tree clean.
+
+RESULTADO:
+Baseline establecido.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.02 — AUDITAR DECODER
+
+OBJETIVO:
+Identificar campos observables.
+
+ACCIÓN:
+Leer device_decoder y fixtures; añadir mtype/frame_type sin descifrar.
+
+EVIDENCIA:
+Join Request DevEUI; uplink DevAddr/FPort/FCnt16; MType validado por tipo/longitud.
+
+RESULTADO:
+Modelo de tramas explícito.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Decoder/tests
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.03 — AUDITAR RELACIÓN JOIN ↔ UPLINK
+
+OBJETIVO:
+Auditar posibilidad de correlación.
+
+ACCIÓN:
+Revisar cola/decoder y referencia primaria Semtech/LoRa Alliance.
+
+EVIDENCIA:
+Join Accept cifrado; no claves raíz ni metadata confirmada de asignación en dashboard; downstream no alimenta lista de dispositivos.
+
+RESULTADO:
+No se puede aprender DevEUI-DevAddr desde join/uplink por proximidad o FPort.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Documentación
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.04 — MODELO DE SESIONES
+
+OBJETIVO:
+Separar equipos y sesiones.
+
+ACCIÓN:
+Crear SessionRegistry y consolidate.
+
+EVIDENCIA:
+entity_key, current_dev_addr, previous_dev_addrs, last_seen, last_fport/last_fcnt y provenance.
+
+RESULTADO:
+Modelo implementado sin guardar alias en DB.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+device_sessions.py
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.05 — PERSISTENCIA DE ASOCIACIONES
+
+OBJETIVO:
+Persistir asociaciones confirmadas.
+
+ACCIÓN:
+Crear config/device_sessions.json versionable.
+
+EVIDENCIA:
+schema_version 1, sessions vacío; carga read-only por muestreo.
+
+RESULTADO:
+No asociaciones reales inventadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JSON sesiones
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.06 — CORRELACIÓN MANUAL CONFIRMADA
+
+OBJETIVO:
+Permitir correlación manual verificable.
+
+ACCIÓN:
+Requerir dev_eui/dev_addr, confirmed true, evidence, valid_from/to con zona.
+
+EVIDENCIA:
+Tests de campos obligatorios, fechas e intervalos aprobados.
+
+RESULTADO:
+Soporte implementado para asociaciones aportadas posteriormente desde PC.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Módulo sesiones/docs
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.07 — CORRELACIÓN AUTOMÁTICA SOLO SI ES SEGURA
+
+OBJETIVO:
+Automatizar solo lo sustentado.
+
+ACCIÓN:
+Consolidar automáticamente con sesiones configuradas; deshabilitar inferencia por heurísticas.
+
+EVIDENCIA:
+Modo confirmed_configuration_only; tests de no inferencia/no escritura aprobados.
+
+RESULTADO:
+Aprendizaje desde tráfico NO implementado: fuentes actuales insuficientes. Decisión segura documentada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Sesiones/tests/docs
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.08 — HISTORIAL DEVADDR
+
+OBJETIVO:
+Conservar historial de dirección.
+
+ACCIÓN:
+Derivar anteriores desde intervalos cerrados y actual desde única sesión vigente.
+
+EVIDENCIA:
+LILYGO y QALCOSONIC fixtures de historial aprobadas; varias abiertas dejan actual null.
+
+RESULTADO:
+Historial consolidado y procedencia visible.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Sesiones/UI
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.09 — CONSOLIDAR JOIN REQUEST + UPLINKS
+
+OBJETIVO:
+Unir join y datos confirmados.
+
+ACCIÓN:
+Agrupar por DevEUI o Device ID confirmado; aplicar sesión por fecha de recepción.
+
+EVIDENCIA:
+Join + datos de un equipo producen una fila; join nuevo no borra fport/contador de datos.
+
+RESULTADO:
+Consolidación aprobada localmente.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Sesiones/monitor
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.10 — NO CONSOLIDAR SIN EVIDENCIA
+
+OBJETIVO:
+No fusionar sin evidencia.
+
+ACCIÓN:
+Mantener direcciones no asociadas separadas.
+
+EVIDENCIA:
+Dos DevAddr mismo FPort 10 siguen separados; no asociación con join cercano.
+
+RESULTADO:
+Desconocidos visibles.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Sesiones/tests
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.11 — FLUJO OPERACIONAL: DISPOSITIVO
+
+OBJETIVO:
+Mejorar primer bloque del flujo.
+
+ACCIÓN:
+Mostrar activos, identidades recientes u observadas según resumen backend.
+
+EVIDENCIA:
+3 ACTIVOS en fixture confirmada; 2 IDENTIDADES RECIENTES sin asociación; antiguos no activos.
+
+RESULTADO:
+Sin UNKNOWN genérico cuando hay datos útiles.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.12 — FLUJO OPERACIONAL: GATEWAY RAK5146
+
+OBJETIVO:
+Separar forwarder y RF.
+
+ACCIÓN:
+Usar ActiveState del servicio para etiqueta forwarder.
+
+EVIDENCIA:
+Servicio active => FORWARDER ACTIVE; no se modifica rak5146.state UNKNOWN.
+
+RESULTADO:
+Servicio no se confunde con RF.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.13 — TEXTO DEL GATEWAY
+
+OBJETIVO:
+Aclarar texto gateway.
+
+ACCIÓN:
+Mostrar RF: NO VERIFICADO.
+
+EVIDENCIA:
+Tests y captura flujo confirman texto y ausencia de RF OK.
+
+RESULTADO:
+Información precisa.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.14 — COLA LOCAL
+
+OBJETIVO:
+Conservar SQLite Pending/Sent.
+
+ACCIÓN:
+Mantener consultas/aggregados y bloque localStatus.
+
+EVIDENCIA:
+SQL sin cambios; tests de conteos/read-only pasan; fixture 0 Pending/1.150 Sent.
+
+RESULTADO:
+Sin regresión local.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO de SQL
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.15 — TTN / SERVIDOR
+
+OBJETIVO:
+Conservar evidencia TTN.
+
+ACCIÓN:
+Mantener gateway_monitor y lógica TTN/PUSH_ACK.
+
+EVIDENCIA:
+gateway_monitor.py intacto y tests ONLINE/STALE/red/reloj pasan.
+
+RESULTADO:
+Sin nueva afirmación de entrega.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO de TTN
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.16 — CONTADOR DE DISPOSITIVOS
+
+OBJETIVO:
+Corregir contador consolidado.
+
+ACCIÓN:
+device_summary separa identidades, grupos permanentes y sin asociar.
+
+EVIDENCIA:
+Tres equipos/cinco sesiones => physical_device_count 3; direcciones sin evidencia no se cuentan como equipos confirmados.
+
+RESULTADO:
+KPI evita inflación por sesiones, explicita límites.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Backend/API/JS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.17 — NOMBRE DEL ÚLTIMO DISPOSITIVO
+
+OBJETIVO:
+Mostrar último uplink.
+
+ACCIÓN:
+Seleccionar última trama de datos por recepción local, no último join.
+
+EVIDENCIA:
+Alias si disponible, si no DevAddr; tests de join posterior aprobados.
+
+RESULTADO:
+Contexto operacional preservado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Sesiones/JS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.18 — PRUEBA DRAGINO
+
+OBJETIVO:
+Probar Dragino consolidado.
+
+ACCIÓN:
+Fixture de EUI y sesión confirmada sintética.
+
+EVIDENCIA:
+Una fila Dragino, contador 1.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests sesiones
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.19 — PRUEBA LILYGO
+
+OBJETIVO:
+Probar LILYGO e historial.
+
+ACCIÓN:
+Fixture actual y anterior con intervalos.
+
+EVIDENCIA:
+Una fila, current y previous correctos.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests sesiones
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.20 — PRUEBA QALCOSONIC
+
+OBJETIVO:
+Probar QALCOSONIC sesión nueva.
+
+ACCIÓN:
+Fixture de dirección histórica/actual confirmadas.
+
+EVIDENCIA:
+Nombre conservado y anteriores listadas.
+
+RESULTADO:
+Prueba aprobada, no asociación de producción.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests sesiones
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.21 — PRUEBA DESCONOCIDO
+
+OBJETIVO:
+Probar desconocido.
+
+ACCIÓN:
+DevAddr sin registro.
+
+EVIDENCIA:
+DISPOSITIVO NO REGISTRADO; visible; último uplink muestra dirección.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.22 — PRUEBA NO FPORT
+
+OBJETIVO:
+Prohibir identificación por FPort.
+
+ACCIÓN:
+Dos direcciones mismo puerto y join cercano.
+
+EVIDENCIA:
+Sin fusión ni atribución de nombre.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.23 — PRUEBA KPI
+
+OBJETIVO:
+Probar KPI 3 equipos/5 sesiones.
+
+ACCIÓN:
+Tres EUI y cinco direcciones configuradas sintéticamente.
+
+EVIDENCIA:
+3 entidades/activos, 8 identificadores observados; UI KPI 3.
+
+RESULTADO:
+No cuenta sesiones como equipos extra.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests modelo/frontend
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.24 — PRUEBA FLUJO DISPOSITIVO
+
+OBJETIVO:
+Probar flujo dispositivo.
+
+ACCIÓN:
+Fixtures activos/antiguos/futuros/join solo/sin asociar.
+
+EVIDENCIA:
+3 ACTIVOS solo con datos recientes; histórico se etiqueta observado.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests frontend
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.25 — PRUEBA FLUJO GATEWAY
+
+OBJETIVO:
+Probar gateway.
+
+ACCIÓN:
+Servicio ActiveState active y cierre WS.
+
+EVIDENCIA:
+FORWARDER ACTIVE con RF NO VERIFICADO; al desconectar no afirma servicio activo.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests frontend
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.26 — RESPONSIVE
+
+OBJETIVO:
+Verificar responsive.
+
+ACCIÓN:
+Navegador 1366/900/390/320; overview y devices.
+
+EVIDENCIA:
+Sin overflow global, flujo e historial legibles.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests frontend
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.27 — JAVASCRIPT
+
+OBJETIVO:
+Verificar sintaxis.
+
+ACCIÓN:
+node --check dashboard/static/js/dashboard.js.
+
+EVIDENCIA:
+Sin error.
+
+RESULTADO:
+JavaScript válido.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.28 — TESTS
+
+OBJETIVO:
+Ejecutar suite completa.
+
+ACCIÓN:
+python -m unittest discover -s tests -v.
+
+EVIDENCIA:
+Final 106 tests OK en 25.446 s; cero fallos/errores/skips.
+
+RESULTADO:
+76 previos +30 nuevos aprobados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tres tests nuevos de sesiones
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.29 — PROTEGER UPS
+
+OBJETIVO:
+Preservar UPS.
+
+ACCIÓN:
+Ejecutar suite existente sin modificar código UPS.
+
+EVIDENCIA:
+0xA2 CHARGING, signed16, visuales/stale OK; ups_monitor.py sin diff.
+
+RESULTADO:
+Sin regresión local UPS.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO de UPS
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.30 — PROTEGER CORE LORAWAN
+
+OBJETIVO:
+Preservar transporte.
+
+ACCIÓN:
+git diff -- lorawan_queue.py y revisar protected.
+
+EVIDENCIA:
+Sin salida.
+
+RESULTADO:
+Core intacto.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.31 — PROTEGER SQLITE
+
+OBJETIVO:
+Preservar SQLite operacional.
+
+ACCIÓN:
+Comparar SQL AST y tests de hash fixture/loader fuera de lock.
+
+EVIDENCIA:
+Sin nuevas consultas/migraciones/DML; read-only preservado.
+
+RESULTADO:
+No se escribió DB operacional ni se almacenó downstream.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO operacional
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.32 — GIT DIFF
+
+OBJETIVO:
+Auditar alcance.
+
+ACCIÓN:
+git status/diff --stat/--no-pager diff y diff --check; revisar nuevos módulos/tests.
+
+EVIDENCIA:
+Solo sesiones/metadata/API/UI/docs/tests; whitespace correcto, avisos LF/CRLF documentales.
+
+RESULTADO:
+Revisión antes del commit.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.33 — BITÁCORA
+
+OBJETIVO:
+Registrar PROMPT 014.
+
+ACCIÓN:
+Append de esta sección con 49 tareas y prefijo histórico intacto.
+
+EVIDENCIA:
+Auditoría de protocolo, límites, sesiones, KPI, flujo y pruebas documentados.
+
+RESULTADO:
+Bitácora acumulativa actualizada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.34 — COMMIT
+
+OBJETIVO:
+Versionar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: staging explícito y commit Correlate LoRaWAN sessions and improve operational flow.
+
+EVIDENCIA:
+Sin hash aún.
+
+RESULTADO:
+Se registrará evidencia posterior.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Archivos explícitos previstos
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.35 — PUSH
+
+OBJETIVO:
+Publicar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: git push origin main.
+
+EVIDENCIA:
+Sin salida aún.
+
+RESULTADO:
+Se registrará resultado real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.36 — PRE-PULL RASPBERRY
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Consultar git status por SSH verificado en /home/pi/lorawan_queue; preservar untracked.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.37 — PULL
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y comprobar hash.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.38 — REINICIO DASHBOARD
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl restart/status dashboard.service.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.39 — API DEVICES
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl local /api/devices con identificadores/provenance; confirmar solo asociaciones que tengan evidencia.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.40 — API STATUS
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl local /api/status y revisar device_summary, queue y servicios.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.41 — VALIDACIÓN VISUAL FLUJO
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Revisar flujo con tráfico real y ventana local 120 s; no exigir 3 activos si no hay evidencia.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.42 — VALIDACIÓN VISUAL GATEWAY
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Verificar FORWARDER ACTIVE solo con servicio active, RF NO VERIFICADO.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.43 — VALIDACIÓN DISPOSITIVOS
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Comprobar una fila por equipo con sesiones confirmadas; desconocidos separados.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.44 — SERVICIOS
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl is-active ttn-gateway.service lorawan-queue.service dashboard.service.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.45 — COLA
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: sqlite3 -readonly con conteos status; no DML ni migraciones.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.46 — JOURNAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: journalctl dashboard reciente acotado sin secretos.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.47 — BITÁCORA FINAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Agregar evidencia real SOLO desde PC a BITACORA.md.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.48 — COMMIT DOCUMENTAL FINAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: Commit/push documental PC después de obtener evidencia Raspberry.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+## TAREA 014.49 — SINCRONIZACIÓN FINAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y status Raspberry final.
+
+EVIDENCIA:
+Sin evidencia nueva Raspberry.
+
+RESULTADO:
+PENDIENTE de acceso remoto y asociaciones confirmadas cuando corresponda.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.

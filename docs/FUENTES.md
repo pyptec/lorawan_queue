@@ -9,3 +9,11 @@ Consulta web: 2026-11-09. La consulta documental no prueba el estado del gateway
 - The Things Stack, Gateway Server y programación de downlinks: https://www.thethingsindustries.com/docs/concepts/architecture/components/gateway-server/
 
 Inferencia pendiente de pruebas: separar hilos downstream no garantiza ausencia de latencia si el receptor compartido espera otras operaciones. Las restricciones temporales de downlink deben medirse; modificar rxpk.time no demuestra recuperación de ventanas de recepción.
+
+
+## PROMPT 014 — Identidad y Join Accept
+
+Consultadas para la auditoría, no son evidencia operacional de Raspberry:
+- LoRa Alliance, TS001-1.0.4, secciones 6.2.5/6.2.6: https://lora-alliance.org/wp-content/uploads/2021/11/LoRaWAN-Link-Layer-Specification-v1.0.4.pdf (Join Request DevEUI; Join Accept contiene DevAddr cifrado).
+- Semtech Learning Center, Network Server Sends Join Accept: https://learn.semtech.com/mod/book/view.php?chapterid=96&id=171 (campos Join Accept cifrados con AppKey en el procedimiento 1.0.4).
+No implica que el nodo real use una versión ya verificada ni autoriza descifrado/almacenamiento de downlinks. La ausencia de claves y metadata de asignación en el dashboard es evidencia de código local.

@@ -13,9 +13,9 @@ DB_PATH = os.environ.get("DASHBOARD_DB_PATH", "/home/pi/lorawan_queue/lorawan_qu
 
 
 def collect():
-    """Solo SQLite; no depende de DNS, servicios ni recursos del sistema."""
+    """SQLite de solo lectura y configuración local; sin DNS ni servicios."""
     queue = queue_monitor.snapshot(DB_PATH)
-    return {"queue": queue, "devices": queue["devices"]}
+    return {"queue": queue, "devices": queue["devices"], "device_summary": queue.get("device_summary", {"state": "UNKNOWN"})}
 
 
 def merge(app, delta, source):
@@ -47,7 +47,7 @@ async def poll(app, read=collect, section=None, interval=10):
             sample = await asyncio.to_thread(read)
             delta = {section: sample} if section else sample
         except Exception:
-            delta = {section: {"state": "UNKNOWN", "error": "Fuente no disponible"}} if section else {"queue": {"state": "UNKNOWN", "rows": [], "devices": []}, "devices": []}
+            delta = {section: {"state": "UNKNOWN", "error": "Fuente no disponible"}} if section else {"queue": {"state": "UNKNOWN", "rows": [], "devices": []}, "devices": [], "device_summary": {"state": "UNKNOWN"}}
             if section == "services":
                 delta = {"services": [{"name": name, "state": "UNKNOWN"} for name in gateway_monitor.SERVICES]}
         merge(app, delta, source)
@@ -58,7 +58,8 @@ async def poll(app, read=collect, section=None, interval=10):
 async def lifespan(app):
     app.state.snapshot = {"health": "DEGRADED", "state": "UNKNOWN", "sampled_at": None,
         "queue": {"state": "UNKNOWN", "rows": [], "devices": []}, "devices": [],
-        "internet": {"state": "UNKNOWN"}, "services": [], "ups": ups_monitor.unknown()}
+        "internet": {"state": "UNKNOWN"}, "services": [], "ups": ups_monitor.unknown(),
+        "device_summary": {"state": "UNKNOWN"}}
     tasks = [asyncio.create_task(poll(app, collect)),
              asyncio.create_task(poll(app, system_monitor.snapshot, "system", 5)),
              asyncio.create_task(poll(app, gateway_monitor.services, "services", 15)),

@@ -24,13 +24,19 @@ def decode_packet(raw, row):
             try:
                 frame = base64.b64decode(rx.get("data", ""), validate=True)
                 mtype = frame[0] >> 5
+                item["mtype"] = mtype
+                item["frame_type"] = "OTHER"
                 if mtype in (2, 4) and len(frame) >= 12 and 8 + (frame[5] & 15) <= len(frame) - 4:
+                    item["frame_type"] = "UPLINK"
                     item["identity"] = "DevAddr:" + frame[1:5][::-1].hex().upper()
                     item["fcnt16"] = struct.unpack_from("<H", frame, 6)[0]
                     port = 8 + (frame[5] & 15)
                     item["fport"] = frame[port] if port < len(frame) - 4 else None
                 elif mtype == 0 and len(frame) == 23:
+                    item["frame_type"] = "JOIN_REQUEST"
                     item["identity"] = "DevEUI:" + frame[9:17][::-1].hex().upper()
+                elif mtype == 1 and len(frame) in (17, 33):
+                    item["frame_type"] = "JOIN_ACCEPT"
             except (ValueError, TypeError, IndexError):
                 pass
             result.append(item)

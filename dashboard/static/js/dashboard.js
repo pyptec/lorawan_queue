@@ -154,12 +154,17 @@ function queueStat(label, value, status = "") {
   node.append(element("small", "", label), element("strong", "", count(value)));
   return node;
 }
+function deviceSummary(data, stale) {
+  const summary = data.device_summary || data.queue?.device_summary;
+  return !stale && data.queue?.state === "OK" && summary?.state === "OK" ? summary : null;
+}
 function renderKpis(data, stale) {
   const system = data.system || {}, queue = data.queue || {}, summary = queue.summary || {}, internet = data.internet || {}, gateway = data.gateway || {};
   const ups = upsValue(data, stale);
   const qKnown = queue.state === "OK";
   const devices = Array.isArray(data.devices) ? data.devices : [];
   const identities = new Set(devices.map(item => item.identity).filter(Boolean));
+  const ds = deviceSummary(data, stale);
   const gatewayState = stale || !data.system ? "UNKNOWN" : data.health === "OK" ? "ONLINE" : "DEGRADED";
   const queueInfo = element("div", "kpi-subvalue");
   const sent = element("span", ""); sent.append(element("strong", "", qKnown ? count(summary.sent) : "—"), document.createTextNode(" Sent")); queueInfo.append(sent);
@@ -167,7 +172,7 @@ function renderKpis(data, stale) {
   const tempState = !validNumber(system.temperature_c) ? "UNKNOWN" : system.temperature_c >= 80 ? "CRITICAL" : system.temperature_c >= 70 ? "WARNING" : "OK";
   $("cards").replaceChildren(
     kpi("Gateway", "gateway", badge(gatewayState), "Salud general · RF independiente", gatewayState),
-    kpi("Dispositivos detectados", "devices", qKnown ? count(identities.size) : "—", "Identidades en la muestra local", qKnown ? "" : "UNKNOWN"),
+    kpi("Equipos consolidados", "devices", ds ? count(ds.physical_device_count) : "—", ds ? count(ds.observed_identity_count) + " identidades · " + count(ds.uncorrelated_identity_count) + " sin asociar" : qKnown ? count(identities.size) + " identidades observadas · consolidación no disponible" : "Muestra local no disponible", ds ? "" : "UNKNOWN"),
     kpi("Cola local", "database", pending, queue.state === "OK" ? "SQLite · uplinks persistidos" : "DB: NO DISPONIBLE", qKnown ? "" : "UNKNOWN", queueInfo),
     kpi("Internet", "internet", badge(stale ? "UNKNOWN" : state(internet.state)), "Pruebas DNS + TCP externo", stale ? "UNKNOWN" : state(internet.state)),
     kpi("TTN / servidor", "cloud", badge(stale ? "UNKNOWN" : state(gateway.ttn?.state)), "Evidencia PUSH_ACK UDP", stale ? "UNKNOWN" : state(gateway.ttn?.state)),
@@ -175,10 +180,10 @@ function renderKpis(data, stale) {
     kpi("Temperatura CPU", "thermometer", numeric(system.temperature_c, " °C"), validNumber(system.temperature_c) ? "Temperatura del sistema" : "Fuente térmica no disponible", tempState)
   );
 }
-function flowStep(graphic, title, status, detail) {
-  const node = element("div", "flow-step"); node.dataset.state = status;
+function flowStep(graphic, title, status, detail, semantic = status) {
+  const node = element("div", "flow-step"); node.dataset.state = semantic;
   const illustration = element("div", "flow-illustration"); illustration.append(icon(graphic));
-  node.append(illustration, element("h3", "", title), badge(status), element("p", "", detail));
+  node.append(illustration, element("h3", "", title), badge(status, semantic), element("p", "", detail));
   return node;
 }
 function flowLink(status, blocked = false) {
@@ -190,20 +195,27 @@ function flowLink(status, blocked = false) {
 function renderFlow(data, stale) {
   const queue = data.queue || {}, summary = queue.summary || {}, gateway = data.gateway || {}, internet = data.internet || {};
   const known = !stale && queue.state === "OK";
-  const rf = stale ? "UNKNOWN" : state(gateway.rak5146?.state);
   const ttn = stale ? "UNKNOWN" : state(gateway.ttn?.state);
   const localStatus = !known ? "UNKNOWN" : summary.pending > 0 ? "pending" : "OK";
-  const nodeCount = Array.isArray(data.devices) ? data.devices.length : 0;
-  const pf = serviceLabel(service(data, "ttn-gateway.service"));
-  const latest = (queue.rows || []).map(row => instant(row.received_at)?.getTime()).filter(validNumber);
-  const age = validNumber(data.system?.time) && latest.length ? data.system.time * 1000 - Math.max(...latest) : null;
-  const received = known && validNumber(age) && age >= 0 && age <= 120000;
+  const ds = deviceSummary(data, stale);
+  const pf = stale ? "UNKNOWN" : serviceLabel(service(data, "ttn-gateway.service"));
+  const recent = ds && ds.active_device_count + ds.active_uncorrelated_count > 0;
+  const devices = Array.isArray(data.devices) ? data.devices : [];
+  const observed = new Set(devices.map(item => item.identity).filter(Boolean)).size;
+  const deviceLabel = !known ? "NO VERIFICADO" : ds && ds.active_device_count > 0 ? count(ds.active_device_count) + " ACTIVOS"
+    : ds && ds.active_uncorrelated_count > 0 ? count(ds.active_uncorrelated_count) + " IDENTIDADES RECIENTES"
+    : (ds ? count(ds.observed_identity_count) : count(observed)) + " IDENTIDADES OBSERVADAS";
+  const last = ds?.latest_uplink;
+  const lastLabel = last ? last.name || (last.dev_addr ? "DevAddr " + last.dev_addr : last.identity) : "NO DISPONIBLE";
+  const deviceDetail = "Último uplink: " + lastLabel + (ds ? " · " + count(ds.uncorrelated_identity_count) + " identidades sin asociar · actividad: recepción local ≤ " + ds.active_window_seconds + " s" : " · sin resumen de actividad");
+  const forwarder = pf === "ACTIVE" ? "FORWARDER ACTIVE" : pf === "UNKNOWN" ? "FORWARDER NO VERIFICADO" : "FORWARDER " + pf;
+  const forwarderState = pf === "ACTIVE" ? "OK" : ["INACTIVE", "FAILED"].includes(pf) ? "OFFLINE" : "UNKNOWN";
   const blocked = !stale && internet.state === "OFFLINE";
   const linkState = blocked ? "OFFLINE" : !known ? "UNKNOWN" : summary.pending > 0 ? "pending" : ttn === "ONLINE" ? "OK" : "UNKNOWN";
   $("operational-flow").replaceChildren(
-    flowStep("radio", "Dispositivo LoRaWAN", received ? "RECIBIDO" : "UNKNOWN", known && nodeCount ? "Metadatos rxpk disponibles" : "Sin recepción reciente verificada"),
-    flowLink(received ? "OK" : "UNKNOWN"),
-    flowStep("gateway", "Gateway RAK5146", rf, "Packet Forwarder: " + (stale ? "UNKNOWN" : pf)),
+    flowStep("radio", "Dispositivos LoRaWAN", deviceLabel, deviceDetail, !known ? "UNKNOWN" : recent ? "OK" : "STALE"),
+    flowLink(recent ? "OK" : "UNKNOWN"),
+    flowStep("gateway", "Gateway RAK5146", forwarder, "RF: NO VERIFICADO · servicio Packet Forwarder", forwarderState),
     flowLink(localStatus),
     flowStep("database", "Cola local SQLite", localStatus === "pending" ? "pending" : localStatus, known ? count(summary.pending) + " Pending · " + count(summary.sent) + " Sent" : "DB no disponible"),
     flowLink(linkState, blocked),
@@ -281,8 +293,10 @@ function deviceIdentity(item) {
   if (item.device_id) labels.append(element("small", "", "Device ID: " + item.device_id));
   else if (item.alias_device_id) labels.append(element("small", "", "Device ID (config.): " + item.alias_device_id));
   labels.append(element("small", "mono", item.dev_addr ? "DevAddr: " + item.dev_addr : item.identity || "Identificador no disponible"));
-  if (item.dev_eui && !item.identity?.startsWith("DevEUI:")) labels.append(element("small", "mono", "DevEUI: " + item.dev_eui));
+  if (item.dev_eui && (!item.identity?.startsWith("DevEUI:") || item.dev_addr)) labels.append(element("small", "mono", (Array.isArray(item.correlation_sources) && item.correlation_sources.includes("confirmed_session") ? "DevEUI (sesión confirmada): " : "DevEUI: ") + item.dev_eui));
   if (!item.dev_eui && item.alias_dev_eui) labels.append(element("small", "mono", "DevEUI (config.): " + item.alias_dev_eui));
+  if (item.current_dev_addr) labels.append(element("small", "mono", "DevAddr actual (confirmado): " + item.current_dev_addr));
+  if (Array.isArray(item.previous_dev_addrs) && item.previous_dev_addrs.length) labels.append(element("small", "mono", "DevAddr anteriores: " + item.previous_dev_addrs.join(", ")));
   if (item.alias_match === "dev_addr") labels.append(element("small", "", "Alias por DevAddr de sesión"));
   node.append(icon("radio"), labels); return node;
 }
@@ -294,7 +308,7 @@ function devicesTable(devices, compact = false) {
     if (!compact) { cell(row, item.datr); cell(row, numeric(item.freq, " MHz", 3)); }
     cell(row, dateText(item.received_at, true)); cell(row, badge(text(item.status), item.status)); return row;
   });
-  return table(compact ? ["Nombre", "RSSI", "SNR", "Última recepción", "Cola"] : ["Nombre", "DevAddr", "FPort", "FCnt16", "RSSI", "SNR", "Data Rate", "Frecuencia", "Última recepción", "Cola"], rows, compact ? "recent-device-table" : "device-table", "Dispositivos observados");
+  return table(compact ? ["Nombre", "RSSI", "SNR", "Última recepción", "Cola"] : ["Nombre", "DevAddr observado", "FPort", "FCnt16", "RSSI", "SNR", "Data Rate", "Frecuencia", "Última recepción", "Cola"], rows, compact ? "recent-device-table" : "device-table", "Dispositivos observados");
 }
 function renderDevices(data) {
   const devices = Array.isArray(data.devices) ? data.devices : [];

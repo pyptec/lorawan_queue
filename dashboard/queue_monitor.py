@@ -4,13 +4,14 @@ import time
 from pathlib import Path
 from .device_decoder import decode_packet
 from .device_aliases import load_registry
+from .device_sessions import load_sessions, consolidate
 
 COLUMNS = "id received_at original_time gateway_eui status attempts last_attempt sent_at ack_at delay_seconds created_at".split()
 
 
 def snapshot(path, budget=0.08):
     result = {"state": "UNKNOWN", "source": "SQLite mode=ro", "rows": [], "devices": [],
-              "autonomy": "NO DISPONIBLE", "error": None}
+              "autonomy": "NO DISPONIBLE", "error": None, "device_summary": {"state": "UNKNOWN"}}
     conn = None
     try:
         path = Path(path).resolve()
@@ -35,7 +36,7 @@ def snapshot(path, budget=0.08):
             FROM uplink_queue""").fetchone())
         result["summary"] = {k: (v or 0) if k in ("sent", "pending", "failed", "attempts") else v for k,v in summary.items()}
         result["last_ack"] = conn.execute("SELECT MAX(ack_at) FROM uplink_queue").fetchone()[0] if "ack_at" in available else None
-        devices = {}
+        observations = []
         raw_rows = conn.execute("""SELECT id,received_at,status,
             CASE WHEN typeof(raw_packet)='blob' AND length(raw_packet)<=65535
                  THEN raw_packet ELSE NULL END AS raw_packet
@@ -47,10 +48,9 @@ def snapshot(path, budget=0.08):
             if r["raw_packet"] is None:
                 continue
             for item in decode_packet(r["raw_packet"], r):
-                key = item["identity"] or f"unknown:{r['id']}:{item['rxpk_index']}"
-                devices.setdefault(key, item)
+                observations.append(item)
         aliases = load_registry()
-        result["devices"] = [aliases.resolve(item) for item in list(devices.values())[:100]]
+        result["devices"], result["device_summary"] = consolidate(observations, aliases, load_sessions())
         result["state"] = "OK"
     except (OSError, sqlite3.Error, ValueError, TypeError):
         result.update(state="UNKNOWN", error="SQLite no disponible, incompatible, ocupada o presupuesto agotado")
