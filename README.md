@@ -186,3 +186,12 @@ SQLite: conexión mode=ro y query_only, snapshot de lectura consistente; límite
 FASE 2: integrar estadísticas actuales de packet forwarder/journal para RF/GPS con formato validado; por ahora RAK5146/SPI/GPS UNKNOWN. Registro de dispositivos, mapeo DevEUI/Device ID y decoders locales validados quedan PENDIENTES: no se implementan temperatura/humedad/volumen/valores LILYGO. Las observaciones sin asociación muestran UNKNOWN DEVICE.
 
 La revisión de PC no autoriza despliegue ni demuestra RF, TTN o ausencia de latencia. Unidad dashboard.service preparada, no instalada. Dependencias de ejecución sin cambios en esta revisión; Playwright se instala solo en PC para pruebas, no se añade al gateway.
+
+
+## PROMPT 008 — Interfaz PYP e infografía operacional (2026-11-15)
+
+CONFIRMADO en PC: presentación clara con fondo #F5F7F8, verdes #A6CE39/#6BA425, logo original `dashboard/static/img/logo_pyp.png`, navegación lateral y cinco vistas: Dashboard, Dispositivos, Cola, Eventos y Sistema. SVG inline locales, sin CDN, fuentes remotas ni frameworks nuevos. Backend, endpoints y WebSocket conservados.
+
+Los KPI, barras y distribución de estados se calculan exclusivamente con la API. Eventos son marcas disponibles en SQLite, no un journal añadido. RF/commit exacto/Fast Send sin marcas muestran NO DISPONIBLE; Packet Forwarder ACTIVE no acredita RF OK. La recuperación de conectividad se anuncia solo tras transición observada y con pendientes; no se afirma actividad de reenvío sin evidencia. Sin DB: UNKNOWN y conteos no disponibles, sin crearla. Sin WebSocket: muestras anteriores explícitas y estados actuales desconocidos.
+
+Diseño responsive: flujo horizontal en escritorio, parcialmente apilado en tablet y vertical en móvil; menú plegable con logo también en header móvil, foco accesible y tablas con scroll interno. Hora mostrada desde el timestamp del backend, en America/Bogota (UTC−5). Validaciones y límites: BITACORA.md, PROMPT 008. No hay datos de demostración en el producto; las capturas con fixtures se identifican como pruebas. Sin despliegue Raspberry ni commit automático.

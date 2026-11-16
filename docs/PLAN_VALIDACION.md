@@ -126,3 +126,12 @@ systemd-analyze verify deploy/dashboard.service
 Si `ss` ejecuta correctamente y no aparece listener 8080: disponible en ese momento; si aparece, NO instalar hasta identificar el proceso. No cambiar automáticamente el puerto ni detener otro receptor. Verificar versión Python >=3.10, dependencias en venv, usuario pi, rutas, permisos DB/auxiliares WAL, fuentes /proc y sysfs, firewall LAN. No abrir SQLite sin -readonly cuando se espera una DB existente: un nombre erróneo no debe crearla.
 
 Después de comprobar lo anterior y autorizar instalación: instalar dashboard.service, daemon-reload, enable/start, status/journal y comparación de conteos con dashboard. Refrescar varias veces y comprobar que no se ejecuta DML. Con el productor activo los conteos y stat cambian legítimamente: comparar muestras correlacionadas y atribuir escrituras al proxy; igualdad de conteos/stat por sí sola no demuestra solo lectura. No detener la cola para esta prueba sin autorización. Medir carga/locks/latencia del fast-path y tráfico de control bajo backlog; después pruebas de pérdida Internet, recuperación y reboot con acceso local seguro. Todo permanece PENDIENTE en Raspberry.
+
+
+## PROMPT 008 — Validación visual PYP
+
+Validar cinco vistas en 1920x1080, 1366x768, tablet 900x1000, móvil 390x844 y 320x740: logo real visible sin deformación, tema claro, SVG locales, tablas con scroll interno y ausencia de scroll global. Menú móvil plegable, foco, Escape y cierre; fuentes ausentes y DB no disponible; selección de paquete y filtrado de eventos existentes. Ninguna cifra de demostración en producto.
+
+Pruebas transitorias: fixture ficticia SQLite y control de red en TemporaryDirectory fuera del repositorio, Uvicorn loopback y navegador Chrome headless; las capturas fixture-* no acreditan operación Raspberry. Comprobar API HTTP 200, mensajes WS, transición OFFLINE/ONLINE con y sin pendientes, reconexión, DOM sin inyección HTML, hash DB de fixture sin cambios atribuibles al dashboard y hash del logo idéntico. Herramienta administrativa y evidencias locales en .git/dashboard-review-008, fuera de commits. Sin agregar dependencias frontend.
+
+Ejecutar unittest, node --check y git diff --check; comprobar backend/proxy intactos y ausencia de .db/.db-journal/.db-wal/.db-shm residuales. Raspberry, navegación LAN real, hardware, servicios reales y carga de renderización en Raspberry permanecen PENDIENTES. El rediseño no cierra ninguna fase operacional anterior.

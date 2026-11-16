@@ -111,3 +111,10 @@ CORREGIDO: cuatro tareas de muestreo independientes publican en la misma caché 
 SQLite mode=ro/query_only, transacción de lectura consistente, timeout 20 ms y presupuesto VM 80 ms; máximo 100 registros y 64 rxpk por datagrama. La conexión se cierra antes de decodificar. No se modifica lorawan_queue.py, no se importan sus sockets, no hay migración ni escritura de aplicación. El agregado histórico aún recorre registros y puede agotar el presupuesto; UNKNOWN explícito. Presupuesto VM no limita estrictamente I/O; medir en Raspberry con backlog antes de afirmar ausencia de impacto. La unidad mantiene filesystem protegido. No usar nolock/immutable para evitar problemas con bases activas; WAL/SHM requieren compatibilidad y permisos de lectura durante despliegue.
 
 DB operacional exclusivamente en Raspberry; no se copia a PC ni a Git. Las fixtures son ficticias y temporales fuera del repositorio. GPS, hardware y decoders de aplicación quedan para FASE 2 del dashboard; no se identifica un modelo a partir de DevAddr sin registro validado. La vista informa UNKNOWN DEVICE y FCnt de 16 bits, no reconstruye el contador completo.
+
+
+## PROMPT 008 — Capa visual desacoplada
+
+Solo se sustituye la presentación HTML/CSS/JavaScript. FastAPI ya monta /static y sirve el logo original sin modificación de app.py. WebSocket /ws/status conserva contrato y frecuencia. API y monitores Python intactos; no hay tablas, colas, procesos ni dependencias nuevas del servicio.
+
+Interfaz: seis KPI; flujo de uplinks por evidencia; recursos con barras; agregados SQLite; tabla de identidades; eventos derivados de received_at/created_at/last_attempt/ack_at/sent_at. No se inventa journal ni timestamp RF/commit/Fast Send. Los pasos gráficos describen marcas disponibles, no una secuencia completa de todos los intentos. Fechas fuente backend, zona America/Bogota. Eventos y tablas acotados a ventana del backend; la interfaz evita reconstruir tablas si no cambia updated_at.queue. Datos externos mediante textContent y nodos DOM, no HTML interpolado. Desconexión del navegador conserva datos previos con advertencia y estados UNKNOWN. Declaración hardware no equivale a medición RF.

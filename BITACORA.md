@@ -293,3 +293,59 @@ COMANDOS EJECUTADOS adicionales: compilación/pruebas/node --check/diff --check 
 RESULTADO: CORREGIDO y CONFIRMADO el alcance local; sin errores críticos o importantes conocidos pendientes en código revisado. LISTO PARA COMMIT sujeto a aprobación de Jaime. No acredita despliegue.
 PENDIENTES: puerto 8080, pull Raspberry, DB/esquema reales y conteos, instalación dashboard.service, Python/ARM, systemd y permisos WAL; medición de carga/locks/fast-path, pérdida Internet, recuperación y reboot. FASE 2 RF/GPS/dispositivos/decoders. Comandos remotos del plan sugeridos NO ejecutados.
 ESTADO: CORREGIDO y CONFIRMADO en PC; validación operacional PENDIENTE. Sin git add/commit/push ni modificaciones remotas.
+
+
+## PROMPT 008 — Rediseño visual Dashboard SAMEE LoRaWAN con identidad PYP e infografía operativa
+### FECHA
+2026-11-15, America/Bogota.
+### ROL
+Ingeniero senior y diseñador UI/UX Python/FastAPI/HTML/CSS/JavaScript/WebSocket/IoT/LoRaWAN/Raspberry/dashboards industriales/Git.
+### CONTEXTO
+HEAD inicial 5d6cc4d, main; PROMPT 006-007 incorporados por usuario antes de esta intervención. Único archivo sin seguimiento inicial: dashboard/static/img/logo_pyp.png proporcionado por usuario. git pull --ff-only: Already up to date. Estado operacional Raspberry sigue PENDIENTE; solo PC accesible en este alcance.
+### TAREA
+Solicitud adjunta: sustituir presentación técnica oscura por infografía operacional clara PYP, logo obligatorio intacto, sidebar, KPI, flujo, recursos, cola, dispositivos y eventos; conservar backend y WebSocket; validar y dejar sin add/commit/push.
+### REGLAS
+Solo desarrollo PC. Sin modificación de lorawan_queue.py, fast-path, backend, configuración RF, DB ni Raspberry. Sin CDN, recursos remotos, dependencias frontend nuevas, valores/dispositivos/eventos/timestamps inventados. Logo original sin alterar bytes. DB operacional no se crea/copia ni versiona en PC; pruebas con fixtures temporales externas al repositorio. Sin add/commit/push hasta aprobación de Jaime.
+### FORMATO
+Catorce secciones solicitadas y campos permanentes de trazabilidad.
+### ARCHIVOS REVISADOS
+Adjunto Pasted text.txt; AGENTS.md; HTML/CSS/JavaScript existentes; dashboard/app.py, queue_monitor.py, system_monitor.py, gateway_monitor.py, device_decoder.py; BITACORA PROMPT 007; listado dashboard/tests; logo real inspeccionado con view_image; contexto README/arquitectura/plan de la revisión anterior y estado Git.
+### ARCHIVOS CONSULTADOS
+Los indicados en ARCHIVOS REVISADOS; Get-FileHash del logo, HEAD y estado Git. Capturas/evidencias administrativas de prueba local.
+### ARCHIVOS MODIFICADOS
+Presentación: dashboard/templates/index.html, dashboard/static/css/style.css, dashboard/static/js/dashboard.js. Documentación: README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, BITACORA.md (solo anexos). Logo existente sin seguimiento y sin modificación; no se crea otro. Backend, requirements, servicios, tests, AGENTS.md y proxy intactos. Artefactos administrativos locales en .git/dashboard-review-008 fuera de commits.
+### IMPLEMENTACIÓN
+Tema claro con fondo #F5F7F8 y verdes #A6CE39/#6BA425, sidebar, header con hora de backend en UTC−5, seis KPI, flujo gráfico y recursos con barras. Cinco vistas: Dashboard, Dispositivos, Cola, Eventos, Sistema. Distribución por estados desde conteos reales; sin curvas históricas inventadas. Tabla y selección conservan las marcas disponibles; RF, commit exacto y Fast Send NO DISPONIBLE. Dispositivos UNKNOWN DEVICE sin inferencia por FPort. Eventos derivados exclusivamente de campos SQLite existentes; sin nueva tabla ni journal falso. Packet Forwarder y RAK5146 RF separados.
+Bandas: caída Internet informa cola y pendientes observados; no afirma almacenamiento actual cuando no se mide. Recuperación solo tras transición observada y si pending > 0; no asegura reenvío activo ni entrega final. Desconexión WS identifica muestras anteriores y estados actuales UNKNOWN. Reconexión conservada con backoff. Datos externos se insertan como texto/nodos DOM; tablas se regeneran solo cuando cambia la muestra de cola. Menú móvil con logo también en header, cierre por Escape/click exterior, aria-expanded e inert cuando está cerrado. Tablas con scroll interno, colores y texto para estados, soporte reduced-motion.
+### ICONOGRAFÍA
+SVG local / inline, sin recursos externos. Estilo uniforme para LoRaWAN/radio, gateway, SQLite, Internet, TTN, CPU, RAM, SD, GPS, servicios, dispositivos, eventos, cola, termómetro, reloj, flechas, estados y navegación. Sin raster nuevo ni sistema de iconos remoto.
+### LOGO UTILIZADO
+ dashboard/static/img/logo_pyp.png
+Ruta web /static/img/logo_pyp.png. Archivo existente del usuario, 1 355 270 bytes; SHA256 inicial 15038971c06a40e3a6a5714c3e07beade298c48d777e14c81a154dfe75a839c1. Sin recorte, filtro ni modificación; CSS mantiene height:auto y proporción. Backend ya sirve static: app.py no requiere cambios.
+### COMANDOS EJECUTADOS
+Get-Content de adjunto/reglas/código/bitácora; git status --short --branch; git log -1 --oneline; rg --files dashboard tests; Get-ChildItem dashboard/static/img; Get-FileHash logo; view_image logo/capturas; git pull --ff-only; scripts Python desde stdin para baseline administrativo, HTML/CSS/JS y documentación. node --check dashboard/static/js/dashboard.js; python .git/dashboard-review-008/visual_check.py (dos ejecuciones iniciales con Uvicorn loopback y Chrome headless); python -m unittest discover -s tests -v; git diff --check; git diff --exit-code de backend/proxy/reglas/requirements/unidad; exploración recursiva SQLite residual; git diff --numstat. Lecturas y escrituras solo PC.
+### EVIDENCIA
+CONFIRMADO inicialmente: 33 pruebas OK (2.831 s), node --check y diff-check sin errores. Chrome headless: 31 comprobaciones, cinco vistas por cinco tamaños, seis APIs HTTP 200, logo servido byte por byte con proporción correcta, cero errores JS y solicitudes externas; transición offline/recuperación, filtro ACK, selección, reconexión e identidad inyectada tratada como texto. Las fixtures son ficticias en TemporaryDirectory fuera del repositorio; los datos del sistema de las capturas son del PC, no de Raspberry. Producción no fue copiada.
+Primera captura móvil tomó parte de la transición de cierre; CORREGIDO en verificador esperando sidebar fuera de viewport y deshabilitando animaciones para captura. Se añadió el mismo logo al header móvil para mantenerlo visible con menú cerrado y se mejoró foco. Sin fallo de datos ni backend. Revisión final se registra tras ejecutarla.
+### VALIDACIONES
+PENDIENTE repetición final tras últimos ajustes de GPS, edades ACK, fechas y formato CSS; comparación de hashes de logo/backend e integridad del historial; diff final.
+### VALIDACIÓN
+Pruebas PC y fixtures no equivalen a operación de LoRaWAN, TTN, servicios Linux ni Raspberry. La ausencia de DB en PC es correcta.
+### RESULTADO
+CONFIRMADO implementación visual local; pendiente cierre de comprobaciones finales. Backend y lógica de cola conservados.
+### PENDIENTES
+Revisión visual de Jaime, aprobación de publicación y validación Raspberry posterior. No ejecutar add/commit/push, pull remoto, instalación, reinicio, cortes ni reboot durante esta intervención. Comandos remotos previos del plan son sugeridos NO ejecutados. RF/GPS/registro de dispositivos/decoders siguen FASE 2; impacto operacional/renderización en Raspberry PENDIENTE.
+### LIMITACIONES
+Sin hardware/TTN/servicios reales accesibles; no afirmar RF OK por servicio activo. PUSH_ACK solo recepción UDP, no entrega final. No hay eventos históricos completos ni tiempos de cada reintento. Conteo de dispositivos expresa identidades en ventana, no censo permanente. Sin histórico no hay curva ni autonomía. Capturas fixture-* son evidencia de interfaz con datos ficticios de prueba, nunca operación real.
+### ESTADO
+PENDIENTE validación visual/automática final; sin cambios remotos ni commit.
+
+### Validación final de PROMPT 008
+CONFIRMADO: 33 pruebas OK (2.648 s), node --check correcto y git diff --check sin errores. git diff --cached --exit-code: índice sin staging. Diff de backend, proxy, AGENTS.md, unidad y requirements vacío. Comparación SHA256 contra baseline confirma todos esos archivos y logo intactos; BITACORA conserva exactamente el prefijo binario completo anterior (PROMPT 001-007). Sin .db/.db-journal/.db-wal/.db-shm residuales dentro del repositorio.
+CONFIRMADO: última ejecución Chrome headless con 31 comprobaciones; cinco vistas por cinco tamaños (1920x1080, 1366x768, 900x1000, 390x844, 320x740), cero errores JS, cero solicitudes externas, sin overflow global. Seis endpoints HTTP 200; logo HTTP 200 y bytes/hash originales, proporción preservada; logo móvil visible y menú cerrado fuera de viewport con inert. Selección de paquete y filtro ACK correctos. OFFLINE/ONLINE con pending actualiza banda y flechas; sin pending desaparece banda de recuperación. WS reconecta. Identidad con HTML malicioso se inserta como texto, no crea imágenes. Fixture sintética temporal: hash estable durante lecturas; cambios de fixture por la herramienta de prueba están separados de lecturas y no son escrituras del dashboard. Uvicorn y Chrome cerrados; TemporaryDirectory eliminado.
+EVIDENCIA VISUAL: capturas inspeccionadas con view_image de dashboard escritorio/móvil/tablet, dispositivos móvil, paquete seleccionado y sistema móvil/eventos escritorio. Flujo tablet conserva todas las conexiones; recursos GPS y servicio cola aparecen separados de RF. .git/dashboard-review-008/real-pc-no-db-1366.png muestra sistema real del PC sin base, no hardware Raspberry. Archivos fixture-*.png usan paquetes y conectividad ficticios SOLO en el proceso de prueba; no hay datos de demostración en HTML/JS/producto. Archivo visual-result.json contiene los resultados; visual_check.py y salida del servidor son artefactos administrativos fuera de commits.
+LOGO CONFIRMADO: dashboard/static/img/logo_pyp.png, SHA256 15038971c06a40e3a6a5714c3e07beade298c48d777e14c81a154dfe75a839c1, sin modificación. Ya existía como archivo no seguido al iniciar; no se sustituyó ni generó otro.
+COMANDOS EJECUTADOS adicionales: scripts Python de ajustes de interfaz y formato CSS; visual_check.py final repetido; unittest, node --check, diff --check e índice/archivos protegidos; Get-ChildItem SQLite residual; view_image capturas; script de hashes/preservación histórica y generación .git/dashboard-review-008/full.diff (git --no-pager diff más descripción de archivo binario no seguido mediante git diff --no-index -- NUL, código 1 esperado). git status y git --no-pager diff finales. Advertencias LF/CRLF de Git sin errores de whitespace; sin staging.
+RESULTADO: CONFIRMADO rediseño y validación local. LISTO PARA REVISIÓN VISUAL de Jaime. Solo presentación y documentación modificadas; backend, cola, DB operacional y Raspberry conservados. No se afirma funcionamiento RF/TTN ni ausencia de impacto operacional por evidencia de navegador PC.
+PENDIENTES: aprobación visual; validación Raspberry/LAN/hardware posterior según plan, nunca ejecutada en esta intervención. Sin add/commit/push ni despliegue. Los pasos remotos permanecen sugeridos NO ejecutados.
+ESTADO: CONFIRMADO en PC; validación operacional PENDIENTE.
