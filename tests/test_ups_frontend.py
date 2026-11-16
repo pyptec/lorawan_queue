@@ -10,7 +10,7 @@ HAS_BROWSER = importlib.util.find_spec("playwright") is not None and CHROME.is_f
 
 
 @unittest.skipUnless(HAS_BROWSER, "Requires existing Playwright and local Chrome; no hardware")
-class UPSFrontendTests(unittest.TestCase):
+class DashboardBrowserCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from playwright.sync_api import sync_playwright
@@ -60,6 +60,9 @@ class UPSFrontendTests(unittest.TestCase):
     def card(self):
         return self.page.locator("#cards .kpi").filter(has=self.page.locator(".kpi-top", has_text="UPS"))
 
+
+
+class UPSFrontendTests(DashboardBrowserCase):
     def test_ok_without_sample_timestamp_renders_percent(self):
         self.send({"state":"OK","battery_percent":72,"battery_state":"OK","charge_state":"IDLE"})
         self.assertIn("72 %", self.card().inner_text())

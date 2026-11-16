@@ -3030,3 +3030,1128 @@ FLAGS CON CARGADOR: 0xA2 / 162 es evidencia previa proporcionada por usuario; PE
 VALIDACIÓN RASPBERRY: tareas 012.26–012.40 PENDIENTES; consulta pre-pull BLOQUEADA por autenticación; no pull, reinicio, lectura I2C, curl, WebSocket real, servicios, SQLite ni journal ejecutados.
 PENDIENTES: acceso SSH verificado, inspección repo remoto sin borrar untracked, despliegue Git, prueba física del usuario con/sin cargador y evidencia real correlacionada API/UI/servicios/cola/journal. No considerar byte de fixture 0x00/0x20 como medición real sin cargador. Estados activos/conteos por sí solos no acreditan no regresión operacional; PUSH_ACK solo recepción UDP.
 ESTADO: CONFIRMADO EN PC; PENDIENTE hardware Raspberry.
+
+
+# PROMPT 013 — Nombres y alias de dispositivos LoRaWAN en dashboard
+
+FECHA: 2026-11-16, America/Bogota.
+ROL: INGENIERO SENIOR DE SOFTWARE EMBEBIDO, RASPBERRY PI, FASTAPI, JAVASCRIPT, WEBSOCKET, LORAWAN, TTN, SQLITE, SYSTEMD, GIT, ARQUITECTURA EDGE Y VALIDACIÓN INDUSTRIAL.
+TAREA GENERAL: TAREA 013.00 — NOMBRES Y ALIAS HUMANOS PARA DISPOSITIVOS OBSERVADOS.
+FORMATO: tareas numeradas 013.01–013.48 con los siete campos solicitados; estados específicos de PROMPT 013.
+PROMPT RECIBIDO: adjunto 2a52cf71-6b23-42be-adee-a2afa1c02a75/Pasted text.txt completo. Alias configurables backend, conservar metadatos, no identificar por FPort, sin alterar DB/LoRaWAN/UPS; pruebas, bitácora, commit/push PC, despliegue Git Raspberry y validación real.
+EVIDENCIA / DATOS APORTADOS: nombres/Device ID/DevEUI y DevAddr histórico QALCOSONIC provienen del usuario; no se realizó correlación física nueva. LILYGO/Dragino sin DevAddr confirmado. Datos disponibles comprobados con código/fixtures equivalentes; DB operacional no leída/copied ni migrada.
+ARCHIVOS CONSULTADOS: solicitud, AGENTS.md, dashboard/queue_monitor.py, device_decoder.py, app.py, static/js/dashboard.js, static/css/style.css, templates/index.html, tests/test_dashboard.py, tests/test_ups_frontend.py, README.md y docs/ARQUITECTURA.md; búsquedas de esquema/fields/tests.
+ARCHIVOS MODIFICADOS: config/device_aliases.json (nuevo), dashboard/device_aliases.py (nuevo), dashboard/queue_monitor.py, dashboard/static/js/dashboard.js, dashboard/static/css/style.css, dashboard/templates/index.html (solo nota informativa), tests/test_device_aliases.py y test_device_aliases_frontend.py (nuevos), tests/test_ups_frontend.py (extraer fixture compartido sin cambiar tests), README.md, docs/ARQUITECTURA.md, docs/PLAN_VALIDACION.md, BITACORA.md.
+COMANDOS EJECUTADOS: Get-Content solicitud/archivos anteriores; git status/--short, branch --show-current, log -3 --oneline; rg --files config (carpeta aún no existía, código 2 esperado), rg -n campos/esquema/símbolos; scripts Python creando JSON/resolver/UI/tests/docs; unittest discover completo dos ejecuciones; node --check y git diff --check; git --no-pager diff fuentes/protegidos/tests, diff --stat y status; script Chrome de capturas con SQLite temporal; view_image de dispositivos desktop/mobile y recientes desktop; append bitácora y validación de prefijo. Comandos posteriores de revisión/commit/push/SSH se registran al tener resultado.
+ARQUITECTURA / DECISIONES: configuración separada, 64 KiB/256 entradas; carga por muestra después de cerrar SQLite. Resolver copia objetos y añade name/registered/alias_match/description/alias_*; normaliza identificadores observados desde identity sin inventar IDs. Identificador más fuerte presente sin coincidencia impide fallback a dirección histórica; duplicados ambiguos no se asignan; no inferir por puerto ni sufijo EUI ni aprender sesiones. No se unen automáticamente Join Requests con uplinks de datos; pueden ser filas separadas. Configuración recargada en el siguiente muestreo compartido, no por HTTP/browser.
+IDENTIFICADORES: uplink PHYPayload datos ofrece DevAddr/FCnt16/FPort; Join Request ofrece DevEUI; estos bytes son observados por parser, no validación criptográfica local de identidad ni confirmación TTN. Device ID actual ausente, preparado para futura fuente confirmada sin integración externa nueva. alias_device_id/alias_dev_eui son configuración y UI los marca config.; no promueve esos valores a campos observados. DevAddr es de sesión y puede cambiar o reutilizarse; alias_match dev_addr se avisa y requiere revisión al cambiar sesión. model UNKNOWN DEVICE histórico permanece sin declarar decoder/modelo verificado.
+CONFIGURACIÓN INICIAL: LILYGO T3S3/lilygo-t3s3-test/70B3D57ED0079EC3/null; Dragino LHT65N/dragino-lht65n-jaime/A84041D1B186E98A/null; QALCOSONIC W1/calle3sur-103/8C83FC05009356D5/009356D5. Descripciones aportadas versionadas; ningún nombre específico quemado en JS. Desconocidos mantienen nombre DISPOSITIVO NO REGISTRADO y campos técnicos.
+ERROR / CORREGIDO DURANTE VALIDACIÓN: primera ejecución: 87 tests, 1 fallo por inner_text del encabezado CSS transformado a NOMBRE frente a expectativa Nombre. La importación directa de la clase UPS también duplicaba 11 pruebas. Corregido únicamente harness: fixture DashboardBrowserCase compartido sin tests, importación de módulo (no clase testeable) y comparación de encabezado en mayúsculas. Suite final exacta 76 tests OK en 25.479 s, cero errores/fallos/skips, sin duplicados; 55 previos + 21 nuevos. No se eliminaron pruebas UPS ni se cambió código para ocultar fallo.
+PRUEBAS / VALIDACIÓN: 14 tests unitarios resolver y 4 integración; 3 browser alias. JSON ausente/inválido/UTF8/estructura/incompleto/oversized/duplicados; prioridad/identificadores insuficientes; configuración inicial; no FPort/sufijo; cambio configuración; decoder real multi-rxpk; hash fixture DB intacto; loader fuera de lock; caché API/status/WS; nombres/metadata/XSS; responsive y primera columna sticky 1366/900/390/320. node y whitespace correctos. UPS 0xA2, signed16, colores/stale pasan. Pruebas de navegador requieren Playwright/Chrome instalados, se omiten explícitamente donde falten; en este PC ejecutadas.
+EVIDENCIA VISUAL: .git/dashboard-review-013/result.json y 5 capturas fixture-* (4 anchos y recientes). Navegador ejecuta JS real con transporte simulado; dispositivos provenientes del decoder y config reales sobre frames/SQLite SINTÉTICOS. Sin errores JS/overflow global; fixture hash estable. Capturas NO son operación real. Chrome cerrado y TemporaryDirectory eliminado; artefactos .git fuera de commit.
+RESULTADO: CONFIRMADO implementación y pruebas PC; hardware/tráfico real/identidades físicas/operación Raspberry PENDIENTES.
+LIMITACIONES / PENDIENTES: LILYGO/Dragino data uplinks sin DevEUI ni dirección asociada seguirán no registrados; eso es correcto. No copiar una asociación DevAddr entre sesiones sin evidencia. Sin acceso DB operacional/TTN/hardware; antecedentes SSH .2.129 autenticación rechazada y .5.169 clave cambiada pendiente de verificar; no alterar SSH. Servicios activos y conteos aislados no prueban no regresión; PUSH_ACK solo recepción UDP. No tocar SQLite, LoRaWAN core, UPS, RF, TTN ni recursos de producción.
+
+## TAREA 013.01 — ESTADO INICIAL DEL REPOSITORIO
+
+OBJETIVO:
+Establecer baseline.
+
+ACCIÓN:
+git status; branch --show-current; log -3.
+
+EVIDENCIA:
+main; 326a122; working tree clean.
+
+RESULTADO:
+Baseline establecido.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.02 — AUDITAR MODELO ACTUAL DE DISPOSITIVOS
+
+OBJETIVO:
+Entender modelo existente.
+
+ACCIÓN:
+Leer queue_monitor/app/decoder/JS/HTML y buscar campos.
+
+EVIDENCIA:
+Últimos 100 datagramas, hasta 64 rxpk; agrupación por identity; caché API/WS común.
+
+RESULTADO:
+Flujo documentado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.03 — INSPECCIONAR DATOS REALES DISPONIBLES
+
+OBJETIVO:
+Usar campos disponibles.
+
+ACCIÓN:
+Revisar consultas/esquema esperado y crear SQLite temporal con frames sintéticos.
+
+EVIDENCIA:
+DevAddr en uplinks, DevEUI en Join Request, FPort/FCnt16/RSSI/lsnr; Device ID ausente del decoder.
+
+RESULTADO:
+Campos actuales comprobados en fixtures, no DB real.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests nuevos
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.04 — DEFINIR MODELO DE ALIAS
+
+OBJETIVO:
+Separar alias de DB.
+
+ACCIÓN:
+Crear config/device_aliases.json.
+
+EVIDENCIA:
+Tres entradas con name/device_id/dev_eui/dev_addr/description.
+
+RESULTADO:
+Configuración versionable sin secretos.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+config/device_aliases.json
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.05 — CARGAR CONFIGURACIÓN DE FORMA SEGURA
+
+OBJETIVO:
+Tolerar configuración defectuosa.
+
+ACCIÓN:
+load_registry con fallback vacío, límites 64 KiB/256 entradas.
+
+EVIDENCIA:
+Archivo ausente/inválido/incompleto no degrada queue; tests OK.
+
+RESULTADO:
+Alias no es dependencia crítica.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+dashboard/device_aliases.py
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.06 — RESOLVER NOMBRE POR IDENTIFICADOR REAL
+
+OBJETIVO:
+Resolver por identificadores observados.
+
+ACCIÓN:
+Prioridad DevEUI, Device ID, DevAddr; sin FPort ni asociación aprendida.
+
+EVIDENCIA:
+Tests de prioridad y no coincidencia por FPort/sufijo.
+
+RESULTADO:
+Nombre consistente y campos originales preservados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Módulo alias y queue_monitor
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.07 — NO CONFUNDIR DevAddr CON IDENTIDAD PERMANENTE
+
+OBJETIVO:
+Documentar sesión OTAA.
+
+ACCIÓN:
+Aviso Alias por DevAddr de sesión y documentación.
+
+EVIDENCIA:
+README/ARQUITECTURA/PLAN y UI distinguen sesión y configuración.
+
+RESULTADO:
+DevAddr no se presenta como identidad permanente.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Documentación/JS/HTML
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.08 — CONFIGURAR LILYGO T3S3
+
+OBJETIVO:
+Configurar LILYGO.
+
+ACCIÓN:
+Registrar nombre/ID/EUI aportados, DevAddr null.
+
+EVIDENCIA:
+LILYGO T3S3; lilygo-t3s3-test; 70B3D57ED0079EC3.
+
+RESULTADO:
+Alias configurado sin inventar dirección.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JSON
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.09 — CONFIGURAR DRAGINO LHT65N
+
+OBJETIVO:
+Configurar Dragino.
+
+ACCIÓN:
+Registrar nombre/ID/EUI aportados, DevAddr null.
+
+EVIDENCIA:
+Dragino LHT65N; dragino-lht65n-jaime; A84041D1B186E98A.
+
+RESULTADO:
+Alias configurado.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JSON
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.10 — CONFIGURAR QALCOSONIC W1
+
+OBJETIVO:
+Configurar QALCOSONIC.
+
+ACCIÓN:
+Registrar datos aportados y asociación histórica de sesión.
+
+EVIDENCIA:
+QALCOSONIC W1; calle3sur-103; 8C83FC05009356D5; 009356D5.
+
+RESULTADO:
+Alias configurado; coincidencia real actual pendiente.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JSON
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.11 — AGREGAR NAME AL OBJETO DEVICE
+
+OBJETIVO:
+Entregar nombre desde backend.
+
+ACCIÓN:
+Enriquecer devices después de cerrar conexión SQLite.
+
+EVIDENCIA:
+name llega a /api/devices, /api/status y WS en integración local.
+
+RESULTADO:
+Una fuente de verdad; app.py sin cambio.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+queue_monitor/resolver
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.12 — CAMPO REGISTRATION STATE
+
+OBJETIVO:
+Distinguir registro.
+
+ACCIÓN:
+Campos registered/alias_match y fallback.
+
+EVIDENCIA:
+Desconocido: name DISPOSITIVO NO REGISTRADO, registered false.
+
+RESULTADO:
+Estado inequívoco y origen de asociación visible.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Resolver
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.13 — PRIMERA COLUMNA NOMBRE
+
+OBJETIVO:
+Nombre como primera columna.
+
+ACCIÓN:
+Reordenar tabla completa; nombre también en recientes.
+
+EVIDENCIA:
+Header NOMBRE y primer strong con alias, pruebas Chrome OK.
+
+RESULTADO:
+Nombre principal, DevAddr columna secundaria.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/CSS
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.14 — NOMBRE EN TARJETAS O DETALLE
+
+OBJETIVO:
+Mostrar nombre fuera de tabla principal.
+
+ACCIÓN:
+Actualizar Dispositivos recientes y metadatos de primera celda.
+
+EVIDENCIA:
+Alias, descripción, Device ID, DevEUI/DevAddr disponibles; alias_* marcados config.
+
+RESULTADO:
+Configuración no se hace pasar por observación.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.15 — DISPOSITIVO NO REGISTRADO
+
+OBJETIVO:
+Conservar desconocidos.
+
+ACCIÓN:
+Fixture ABCDEF12 y puertos 10/100.
+
+EVIDENCIA:
+Nombre no registrado, dirección/RF/FPort/FCnt16 presentes.
+
+RESULTADO:
+No se oculta equipo ni se adivina modelo.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.16 — NO OCULTAR IDENTIFICADORES TÉCNICOS
+
+OBJETIVO:
+Conservar diagnóstico técnico.
+
+ACCIÓN:
+Mantener DevAddr, FPort, FCnt16, RSSI, SNR, frecuencia, Data Rate y hora.
+
+EVIDENCIA:
+Pruebas de campos backend/UI OK; joins sin FPort/FCnt muestran no disponible.
+
+RESULTADO:
+Sin campos técnicos inventados.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+JS/resolver/tests
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.17 — PRUEBA ALIAS CONOCIDO
+
+OBJETIVO:
+Probar alias conocido.
+
+ACCIÓN:
+Resolver DevAddr 009356D5.
+
+EVIDENCIA:
+QALCOSONIC W1; registered true; alias_match dev_addr.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests alias
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.18 — PRUEBA ALIAS DESCONOCIDO
+
+OBJETIVO:
+Probar desconocido.
+
+ACCIÓN:
+Resolver ABCDEF12 y objeto sin identificador.
+
+EVIDENCIA:
+Fallback sin excepción, tests OK.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests alias
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.19 — PRUEBA JSON AUSENTE
+
+OBJETIVO:
+Tolerar JSON ausente.
+
+ACCIÓN:
+Archivo temporal inexistente y snapshot.
+
+EVIDENCIA:
+Registry vacío, queue OK, no archivo creado.
+
+RESULTADO:
+Prueba aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests alias
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.20 — PRUEBA JSON INVÁLIDO
+
+OBJETIVO:
+Tolerar JSON inválido.
+
+ACCIÓN:
+JSON truncado, UTF8 inválido y estructuras incorrectas.
+
+EVIDENCIA:
+Fallback sin alias; integración queue OK.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests alias
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.21 — PRUEBA CAMPOS INCOMPLETOS
+
+OBJETIVO:
+Tolerar campos incompletos.
+
+ACCIÓN:
+Alias solo nombre/EUI; lista vacía/entradas inválidas.
+
+EVIDENCIA:
+Opcionales null, sin error; inválidos omitidos.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests alias
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.22 — VALIDACIÓN FRONTEND
+
+OBJETIVO:
+Validar nombres en navegador.
+
+ACCIÓN:
+Frames sintéticos por decoder real y envío al manejador WS de navegador.
+
+EVIDENCIA:
+Tres nombres y desconocido visibles; XSS se muestra como texto.
+
+RESULTADO:
+Pruebas y capturas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests frontend
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.23 — RESPONSIVE
+
+OBJETIVO:
+Conservar responsive.
+
+ACCIÓN:
+Chrome 1366, 900, 390 y 320 px; scroll horizontal interno y nombre sticky.
+
+EVIDENCIA:
+Sin overflow global; primera columna permanece visible.
+
+RESULTADO:
+Pruebas aprobadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+CSS/tests frontend
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.24 — VALIDACIÓN JAVASCRIPT
+
+OBJETIVO:
+Comprobar JS.
+
+ACCIÓN:
+node --check dashboard/static/js/dashboard.js.
+
+EVIDENCIA:
+Sin error.
+
+RESULTADO:
+Sintaxis correcta.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.25 — SUITE COMPLETA
+
+OBJETIVO:
+Comprobar regresiones.
+
+ACCIÓN:
+python -m unittest discover -s tests -v.
+
+EVIDENCIA:
+76 tests OK, 25.479 s, cero fallos/errores/skips; sin duplicación de tests.
+
+RESULTADO:
+Suite completa aprobada.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Tests
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.26 — PROTEGER UPS
+
+OBJETIVO:
+Proteger UPS.
+
+ACCIÓN:
+Conservar código UPS/estilos y ejecutar sus pruebas.
+
+EVIDENCIA:
+0xA2 CHARGING, signed16, colores/stale OK; ups_monitor.py sin diff.
+
+RESULTADO:
+Sin regresión local UPS.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Fixture browser compartido; tests UPS sin eliminar
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.27 — PROTEGER LORAWAN
+
+OBJETIVO:
+Proteger transporte.
+
+ACCIÓN:
+git diff -- lorawan_queue.py.
+
+EVIDENCIA:
+Sin salida.
+
+RESULTADO:
+Núcleo intacto.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.28 — PROTEGER DB OPERACIONAL
+
+OBJETIVO:
+Proteger SQLite.
+
+ACCIÓN:
+Código SQL intacto; hash de fixture antes/después; carga alias fuera de lock.
+
+EVIDENCIA:
+Sin ALTER/CREATE/DML de alias; fixture hash intacto; BEGIN EXCLUSIVE posible en loader tras cierre de conexión.
+
+RESULTADO:
+Sin cambios de esquema ni escritura operacional.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO operacional
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.29 — GIT DIFF
+
+OBJETIVO:
+Auditar diff.
+
+ACCIÓN:
+git status, diff completo de fuentes y tests, diff --check.
+
+EVIDENCIA:
+Solo configuración/alias/UI/tests/documentación; whitespace sin errores, advertencias LF/CRLF documentales.
+
+RESULTADO:
+Revisión final antes del commit.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.30 — BITÁCORA PRE-COMMIT
+
+OBJETIVO:
+Registrar PROMPT 013.
+
+ACCIÓN:
+Append de arquitectura, datos aportados, pruebas, límites y 48 tareas.
+
+EVIDENCIA:
+Prefijo binario anterior preservado.
+
+RESULTADO:
+Historia acumulativa.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+BITACORA.md
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.31 — COMMIT
+
+OBJETIVO:
+Versionar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: staging explícito y commit Add LoRaWAN device aliases to dashboard.
+
+EVIDENCIA:
+Sin hash aún.
+
+RESULTADO:
+Se registrará evidencia después.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Archivos explícitos previstos
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.32 — PUSH
+
+OBJETIVO:
+Publicar desde PC.
+
+ACCIÓN:
+Sugerido NO ejecutado aún: git push origin main y status.
+
+EVIDENCIA:
+Sin salida aún.
+
+RESULTADO:
+Se registrará resultado real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.33 — ESTADO PRE-PULL RASPBERRY
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: git status en /home/pi/lorawan_queue mediante SSH verificado; no borrar .venv/ ni ttn_iotrack_receiver.py.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.34 — GIT PULL RASPBERRY
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y verificar hash.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.35 — REINICIO DASHBOARD
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl restart/status dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.36 — VALIDACIÓN API DEVICES
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: curl local /api/devices y comprobar name, registered, alias_match y técnicos.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.37 — VALIDACIÓN WEBSOCKET
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Leer un /ws/status acotado y comprobar devices con nombres.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.38 — VALIDACIÓN QALCOSONIC REAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Esperar uplink QALCOSONIC y contrastar identificador con configuración histórica; no afirmar identidad física por fixture.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.39 — VALIDACIÓN DRAGINO REAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Esperar DevEUI Dragino observado o DevAddr asociado confirmado; si falta, documentar limitación sin adivinar.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.40 — VALIDACIÓN LILYGO REAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Esperar DevEUI LILYGO observado o DevAddr asociado confirmado; no identificar por FPort 10.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.41 — DISPOSITIVO NUEVO
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Observar dispositivo desconocido real y verificar que permanece visible.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.42 — VALIDACIÓN VISUAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Recarga fuerte navegador LAN y comprobar nombre primero/metadata diferenciada.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.43 — VALIDACIÓN DE SERVICIOS
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: systemctl is-active ttn-gateway.service lorawan-queue.service dashboard.service.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.44 — VALIDACIÓN DE COLA
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: sqlite3 -readonly con SELECT status, COUNT(*) FROM uplink_queue GROUP BY status; sin escrituras.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.45 — JOURNAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: journalctl dashboard.service reciente sin divulgar secretos.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.46 — ACTUALIZACIÓN FINAL BITÁCORA
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Agregar evidencia real desde PC a bitácora; jamás editar bitácora Raspberry.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.47 — COMMIT DOCUMENTAL FINAL
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: Commit/push documental PC después de obtener evidencia remota real.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.
+
+## TAREA 013.48 — SINCRONIZACIÓN FINAL RASPBERRY
+
+OBJETIVO:
+Desplegar/validar con evidencia real en orden.
+
+ACCIÓN:
+Sugerido NO ejecutado: git pull --ff-only y status Raspberry para sincronización final.
+
+EVIDENCIA:
+Sin evidencia remota nueva.
+
+RESULTADO:
+PENDIENTE de acceso Raspberry y tráfico real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+NINGUNO
+
+OBSERVACIONES:
+Pruebas PC no acreditan tráfico real Raspberry ni correlación física. No inventar DevAddr/DevEUI ni identificar por FPort.

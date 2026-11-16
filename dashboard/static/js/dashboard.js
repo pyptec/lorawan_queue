@@ -275,15 +275,26 @@ function renderQueueSummary(queue) {
 }
 function deviceIdentity(item) {
   const node = element("div", "device-identity"), labels = element("span");
-  labels.append(element("strong", "mono", item.identity || "Sin identidad disponible"), element("small", "", "UNKNOWN DEVICE")); node.append(icon("radio"), labels); return node;
+  const name = item.registered === true && typeof item.name === "string" && item.name.trim() ? item.name : "DISPOSITIVO NO REGISTRADO";
+  labels.append(element("strong", "device-name", name));
+  if (item.description) labels.append(element("small", "", item.description));
+  if (item.device_id) labels.append(element("small", "", "Device ID: " + item.device_id));
+  else if (item.alias_device_id) labels.append(element("small", "", "Device ID (config.): " + item.alias_device_id));
+  labels.append(element("small", "mono", item.dev_addr ? "DevAddr: " + item.dev_addr : item.identity || "Identificador no disponible"));
+  if (item.dev_eui && !item.identity?.startsWith("DevEUI:")) labels.append(element("small", "mono", "DevEUI: " + item.dev_eui));
+  if (!item.dev_eui && item.alias_dev_eui) labels.append(element("small", "mono", "DevEUI (config.): " + item.alias_dev_eui));
+  if (item.alias_match === "dev_addr") labels.append(element("small", "", "Alias por DevAddr de sesión"));
+  node.append(icon("radio"), labels); return node;
 }
 function devicesTable(devices, compact = false) {
   const rows = devices.map(item => {
-    const row = element("tr"); cell(row, deviceIdentity(item)); cell(row, numeric(item.rssi, " dBm")); cell(row, numeric(item.lsnr, " dB"));
-    if (!compact) { cell(row, item.datr); cell(row, numeric(item.freq, " MHz", 3)); cell(row, item.fport); cell(row, item.fcnt16); }
+    const row = element("tr"); cell(row, deviceIdentity(item));
+    if (!compact) { cell(row, item.dev_addr, "mono"); cell(row, item.fport); cell(row, item.fcnt16); }
+    cell(row, numeric(item.rssi, " dBm")); cell(row, numeric(item.lsnr, " dB"));
+    if (!compact) { cell(row, item.datr); cell(row, numeric(item.freq, " MHz", 3)); }
     cell(row, dateText(item.received_at, true)); cell(row, badge(text(item.status), item.status)); return row;
   });
-  return table(compact ? ["Identidad", "RSSI", "SNR", "Última recepción", "Cola"] : ["Identidad", "RSSI", "SNR", "Data Rate", "Frecuencia", "FPort", "FCnt16", "Última recepción", "Cola"], rows, compact ? "recent-device-table" : "", "Dispositivos observados");
+  return table(compact ? ["Nombre", "RSSI", "SNR", "Última recepción", "Cola"] : ["Nombre", "DevAddr", "FPort", "FCnt16", "RSSI", "SNR", "Data Rate", "Frecuencia", "Última recepción", "Cola"], rows, compact ? "recent-device-table" : "device-table", "Dispositivos observados");
 }
 function renderDevices(data) {
   const devices = Array.isArray(data.devices) ? data.devices : [];

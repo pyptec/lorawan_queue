@@ -3,6 +3,7 @@ import sqlite3
 import time
 from pathlib import Path
 from .device_decoder import decode_packet
+from .device_aliases import load_registry
 
 COLUMNS = "id received_at original_time gateway_eui status attempts last_attempt sent_at ack_at delay_seconds created_at".split()
 
@@ -48,7 +49,8 @@ def snapshot(path, budget=0.08):
             for item in decode_packet(r["raw_packet"], r):
                 key = item["identity"] or f"unknown:{r['id']}:{item['rxpk_index']}"
                 devices.setdefault(key, item)
-        result["devices"] = list(devices.values())[:100]
+        aliases = load_registry()
+        result["devices"] = [aliases.resolve(item) for item in list(devices.values())[:100]]
         result["state"] = "OK"
     except (OSError, sqlite3.Error, ValueError, TypeError):
         result.update(state="UNKNOWN", error="SQLite no disponible, incompatible, ocupada o presupuesto agotado")

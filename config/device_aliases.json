@@ -1,0 +1,25 @@
+{
+  "devices": [
+    {
+      "name": "LILYGO T3S3",
+      "device_id": "lilygo-t3s3-test",
+      "dev_eui": "70B3D57ED0079EC3",
+      "dev_addr": null,
+      "description": "Nodo de pruebas LoRaWAN"
+    },
+    {
+      "name": "Dragino LHT65N",
+      "device_id": "dragino-lht65n-jaime",
+      "dev_eui": "A84041D1B186E98A",
+      "dev_addr": null,
+      "description": "Sensor temperatura y humedad"
+    },
+    {
+      "name": "QALCOSONIC W1",
+      "device_id": "calle3sur-103",
+      "dev_eui": "8C83FC05009356D5",
+      "dev_addr": "009356D5",
+      "description": "Medidor de agua"
+    }
+  ]
+}

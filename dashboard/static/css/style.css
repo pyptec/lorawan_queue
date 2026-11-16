@@ -1942,3 +1942,15 @@ body.menu-open .sidebar {
 .ups-kpi .kpi-note { color:var(--ups-color); font-weight:600; }
 .ups-panel h3 .icon { color:var(--ups-color,#8a989f); }
 .ups-status.badge { color:var(--ups-color); background:var(--ups-soft); }
+
+/* Human name first; technical identifiers remain readable in internal table scroll. */
+.device-identity { align-items:flex-start; min-width:185px; max-width:290px; }
+.device-identity>span { min-width:0; }
+.device-identity .device-name { font-size:11px; white-space:normal; overflow-wrap:anywhere; }
+.device-identity small { white-space:normal; overflow-wrap:anywhere; }
+.device-table td:first-child,.recent-device-table td:first-child { position:sticky; left:0; background:#fff; z-index:1; }
+.device-table th:first-child,.recent-device-table th:first-child { position:sticky; left:0; z-index:2; }
+@media(max-width:740px) {
+  .device-identity { min-width:145px; max-width:180px; }
+  .device-identity .device-name { font-size:10px; }
+}
