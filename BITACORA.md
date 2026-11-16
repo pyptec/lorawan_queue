@@ -5382,3 +5382,80 @@ NINGUNO
 
 OBSERVACIONES:
 Evidencia PC no acredita asociaciones físicas, tráfico ni servicios Raspberry. Aprendizaje desde tráfico deshabilitado sin fuente inequívoca.
+
+### Actualización posterior al commit — PROMPT 014
+
+## TAREA 014.34 — COMMIT (actualización)
+
+OBJETIVO:
+Versionar implementación desde PC.
+
+ACCIÓN:
+Validar 15 paths exactos; comparar AST de consultas conn.execute con baseline; verificar protegidos/prefijos; git diff --check; staging explícito; git diff --cached --check/--stat; git commit -m "Correlate LoRaWAN sessions and improve operational flow".
+
+EVIDENCIA:
+a680f58; 15 archivos, 1756 inserciones/25 eliminaciones; 5 nuevos (sesiones JSON/módulo/3 tests). SQL AST idéntico y protegidos intactos; registro real sessions vacío.
+
+RESULTADO:
+Implementación y evidencia PC versionadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+15 archivos explícitos.
+
+OBSERVACIONES:
+Validación PC distinta de asociaciones físicas y tráfico Raspberry. No aprendizaje por FPort/proximidad ni fuentes cifradas sin claves.
+
+## TAREA 014.35 — PUSH (actualización)
+
+OBJETIVO:
+Publicar desde PC.
+
+ACCIÓN:
+git push origin main; git status; git log -1 --oneline.
+
+EVIDENCIA:
+80ceba0..a680f58 main -> main; Your branch is up to date with origin/main; nothing to commit, working tree clean.
+
+RESULTADO:
+Disponible en origen.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional de código.
+
+OBSERVACIONES:
+Validación PC distinta de asociaciones físicas y tráfico Raspberry. No aprendizaje por FPort/proximidad ni fuentes cifradas sin claves.
+
+## TAREA 014.36 — PRE-PULL RASPBERRY (actualización)
+
+OBJETIVO:
+Inspeccionar repositorio remoto antes del despliegue.
+
+ACCIÓN:
+ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes pi@192.168.2.129 con consulta git status/branch/log en /home/pi/lorawan_queue.
+
+EVIDENCIA:
+Permission denied (publickey,password), código 1.
+
+RESULTADO:
+Sin autenticación; comandos remotos no ejecutados.
+
+ESTADO:
+BLOQUEADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO remoto.
+
+OBSERVACIONES:
+Validación PC distinta de asociaciones físicas y tráfico Raspberry. No aprendizaje por FPort/proximidad ni fuentes cifradas sin claves.
+
+COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (NO ejecutados aún al escribir): git diff --check; git add -- BITACORA.md; git commit -m "Document confirmed session model PC validation and pending deployment"; git push origin main; git status; git log -2 --oneline; git ls-remote origin refs/heads/main; git diff 80ceba0 HEAD --name-status; git diff 80ceba0 HEAD -- lorawan_queue.py dashboard/ups_monitor.py dashboard/gateway_monitor.py config/device_aliases.json requirements.txt; git diff 80ceba0 HEAD --check. Resultados/hash finales se presentan mediante evidencia de herramienta en respuesta. Este commit registra PC, NO es cierre de TAREA 014.48 de validación real, que permanece PENDIENTE.
+RESULTADO GENERAL: PROMPT 014 — CONFIRMADO EN PC; modelo de sesiones confirmadas y consolidación automática sobre evidencia implementados; historial/KPI/flujo útiles; RF no sobredeclarado; 106 tests OK; SQL y núcleo intactos; UPS sin regresión local; commit/push realizados.
+CORRELACIÓN AUTOMÁTICA DESDE TRÁFICO: NO disponible con fuentes actuales; no se implementó aprendizaje especulativo. config/device_sessions.json sigue vacío a falta de asociaciones confirmadas. Las cinco direcciones 260C... no fueron asignadas a ningún EUI real. No afirmar que ya se eliminaron duplicados en datos operacionales sin completar esa evidencia.
+PENDIENTES: acceso SSH verificado; metadata real DevEUI-DevAddr y fechas con fuente verificable para incorporar desde PC; pull/reinicio/API/status/WS/UI/tráfico/servicios/cola/journal Raspberry y documentación final PC. Tareas 014.36–014.49 pendientes; intento 014.36 bloqueado por autenticación. No pull/reinicio/consultas operacionales ejecutados.
+ESTADO: CONFIRMADO EN PC; PENDIENTE VALIDACIÓN REAL RASPBERRY Y ASOCIACIONES CONFIRMADAS.
