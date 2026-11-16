@@ -2950,3 +2950,83 @@ NINGUNO
 
 OBSERVACIONES:
 Prueba PC no acredita hardware. No anticipar byte sin cargador ni cierre remoto.
+
+### Actualización de evidencia posterior al commit — PROMPT 012
+
+### TAREA 012.24 — COMMIT (actualización)
+
+OBJETIVO:
+Versionar la corrección desde PC.
+
+ACCIÓN:
+Validación de seis paths exactos, prefijo histórico, protegidos y backend limitado al bloque flags; git diff --check; git add explícito de seis archivos; git diff --cached --stat; git commit -m "Fix UPS charge flags and charging status visuals".
+
+EVIDENCIA:
+b7d907c Fix UPS charge flags and charging status visuals; seis archivos, 1116 inserciones y 11 eliminaciones.
+
+RESULTADO:
+Corrección y pruebas versionadas.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+Los seis archivos esperados.
+
+OBSERVACIONES:
+Sin pruebas físicas ni acceso Raspberry; no afirmar byte sin cargador ni cierre operacional.
+
+### TAREA 012.25 — PUSH (actualización)
+
+OBJETIVO:
+Publicar corrección.
+
+ACCIÓN:
+git push origin main; git status; git log -1 --oneline.
+
+EVIDENCIA:
+9f68332..b7d907c main -> main; Your branch is up to date with origin/main; nothing to commit, working tree clean.
+
+RESULTADO:
+Commit disponible para git pull Raspberry.
+
+ESTADO:
+CONFIRMADO EN PC
+
+ARCHIVOS AFECTADOS:
+NINGUNO adicional de código.
+
+OBSERVACIONES:
+Sin pruebas físicas ni acceso Raspberry; no afirmar byte sin cargador ni cierre operacional.
+
+### TAREA 012.26 — ESTADO PRE-PULL RASPBERRY (actualización)
+
+OBJETIVO:
+Inspeccionar repo remoto antes del despliegue.
+
+ACCIÓN:
+ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes pi@192.168.2.129 con consulta git status/branch/log en /home/pi/lorawan_queue.
+
+EVIDENCIA:
+Permission denied (publickey,password), código 1.
+
+RESULTADO:
+No autenticó; comandos remotos no ejecutados.
+
+ESTADO:
+BLOQUEADO
+
+ARCHIVOS AFECTADOS:
+NINGUNO remoto.
+
+OBSERVACIONES:
+Sin pruebas físicas ni acceso Raspberry; no afirmar byte sin cargador ni cierre operacional.
+
+EVIDENCIA VISUAL FINAL adicional: view_image inspeccionó fixture-final-summary-a2.png, confirma CARGANDO simultáneo en resumen tras ajuste DOM. Las 18 capturas de .git/dashboard-review-012 son fixtures sintéticas, fuera de commits; no se sustituyen datos 0xA2 de hardware previo aportados por el usuario.
+COMANDOS DE CIERRE DOCUMENTAL PREVISTOS (NO ejecutados aún al escribir): git diff --check; git add -- BITACORA.md; git commit -m "Document UPS flags PC validation and pending hardware tests"; git push origin main; git status; git log -2 --oneline; git ls-remote origin refs/heads/main; git diff 9f68332 HEAD --name-status; git diff 9f68332 HEAD -- lorawan_queue.py dashboard/app.py dashboard/templates/index.html requirements.txt; git diff 9f68332 HEAD --check. Su resultado/hash final se presenta con evidencia de herramienta en respuesta. Este commit documental registra PC; NO es el cierre de TAREA 012.39 de hardware, que permanece PENDIENTE.
+RESULTADO GENERAL: PROMPT 012 — CONFIRMADO EN PC; corrección flags 0xA2 CHARGING; prioridad original; siete estados visuales y alertas prioritarias; signed16 preservado; 55 tests OK; código LoRaWAN intacto; commit/push realizados.
+FLAGS SIN CARGADOR: PENDIENTE medición física, sin asumir valor.
+FLAGS CON CARGADOR: 0xA2 / 162 es evidencia previa proporcionada por usuario; PENDIENTE nueva medición tras despliegue.
+VALIDACIÓN RASPBERRY: tareas 012.26–012.40 PENDIENTES; consulta pre-pull BLOQUEADA por autenticación; no pull, reinicio, lectura I2C, curl, WebSocket real, servicios, SQLite ni journal ejecutados.
+PENDIENTES: acceso SSH verificado, inspección repo remoto sin borrar untracked, despliegue Git, prueba física del usuario con/sin cargador y evidencia real correlacionada API/UI/servicios/cola/journal. No considerar byte de fixture 0x00/0x20 como medición real sin cargador. Estados activos/conteos por sí solos no acreditan no regresión operacional; PUSH_ACK solo recepción UDP.
+ESTADO: CONFIRMADO EN PC; PENDIENTE hardware Raspberry.
