@@ -5459,3 +5459,766 @@ RESULTADO GENERAL: PROMPT 014 — CONFIRMADO EN PC; modelo de sesiones confirmad
 CORRELACIÓN AUTOMÁTICA DESDE TRÁFICO: NO disponible con fuentes actuales; no se implementó aprendizaje especulativo. config/device_sessions.json sigue vacío a falta de asociaciones confirmadas. Las cinco direcciones 260C... no fueron asignadas a ningún EUI real. No afirmar que ya se eliminaron duplicados en datos operacionales sin completar esa evidencia.
 PENDIENTES: acceso SSH verificado; metadata real DevEUI-DevAddr y fechas con fuente verificable para incorporar desde PC; pull/reinicio/API/status/WS/UI/tráfico/servicios/cola/journal Raspberry y documentación final PC. Tareas 014.36–014.49 pendientes; intento 014.36 bloqueado por autenticación. No pull/reinicio/consultas operacionales ejecutados.
 ESTADO: CONFIRMADO EN PC; PENDIENTE VALIDACIÓN REAL RASPBERRY Y ASOCIACIONES CONFIRMADAS.
+
+# PROMPT 015 — Cierre técnico: validación PC y límites Raspberry (2026-11-17)
+
+ROL: Ingeniería de software embebido, integración y QA.
+TAREA: 015.00 — Revisar versión publicada sin nuevas funcionalidades.
+FORMATO: Registro incremental y tareas 015.01–015.31 con evidencia y límites.
+EVIDENCIA: PC main en d8b5f04fb21659b3f3abebedf3d9d8fb260dacca; origin/main y git ls-remote coincidentes tras fetch. Baseline limpio. Suite: Ran 106 tests in 21.438s, OK. node --check sin salida, código 0. SSH 192.168.2.129: Permission denied (publickey,password). SSH 192.168.5.169: Host key verification failed (clave distinta a known_hosts); no se alteró confianza SSH.
+ARCHIVOS CONSULTADOS: adjunto Pasted text.txt del PROMPT 015; AGENTS.md; README.md; BITACORA.md; listado del repositorio; config/device_sessions.json; dashboard/queue_monitor.py; dashboard/ups_monitor.py; fragmento init_db de lorawan_queue.py; referencias de tests UPS y cola.
+ARCHIVOS MODIFICADOS: solo BITACORA.md.
+COMANDOS EJECUTADOS: Get-Content del adjunto, AGENTS.md, README.md, cola y UPS; Get-Content BITACORA.md -Tail 240; Get-Location; rg --files; búsquedas rg en documentación/código/tests; git status --short --branch; git status; git branch --show-current; git log -5 --oneline; git fetch origin; git rev-parse HEAD origin/main; git ls-remote origin refs/heads/main; python -B -m unittest discover -s tests -v; node --check dashboard/static/js/dashboard.js; git diff; git diff --check; git diff 80ceba0 HEAD -- lorawan_queue.py dashboard/ups_monitor.py config/device_aliases.json; git diff a680f58 HEAD --stat; git tag --list v1.0.0; dos intentos ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes pi@IP con consulta status/log remota (no ejecutada por fallo SSH). Una búsqueda rg tests/test_ups* falló por glob Windows; repetida correctamente con rg tests -g test_ups*.
+RESULTADO: CONFIRMADO en PC: 106 tests, JavaScript, baseline y sincronización origin. Sin cambios de código. No hay tag local v1.0.0. No se declara cierre técnico completo.
+VALIDACIÓN: Tests aislados y frontend con fixtures no acreditan hardware ni operación Raspberry. Sin lectura de DB operacional ni payloads. Core y UPS sin diferencias frente a 80ceba0; desde a680f58 solo cambiaba BITACORA.md. Dashboard usa mode=ro y query_only; existen ALTER TABLE históricos en init_db del proxy, no añadidos ni ejecutados aquí. No afirmar ausencia absoluta de migraciones históricas.
+PENDIENTES: Acceso SSH válido a 192.168.2.129 o verificación independiente de identidad de 192.168.5.169. No desactivar StrictHostKeyChecking ni sustituir known_hosts sin verificar. Despliegue, APIs, servicios, journals, cola, TTN, UI y capturas reales. Tag sujeto a todas las validaciones críticas.
+ESTADO: CONFIRMADO para evidencia PC; PENDIENTE cierre Raspberry y versión estable.
+
+GPS: CONFIRMADO como declaración recibida del usuario: UART/NMEA a 9600, /dev/serial0 -> /dev/ttyS0, sin fix y 0 satélites, antena/coaxial averiados. No medido en esta intervención. HIPÓTESIS: avería física como causa del no-fix. PENDIENTE reemplazo de antena y nueva validación; no bloqueante para software. La fecha «siguiente jornada» es intención comunicada, no ejecución confirmada. Sin cambios GPS.
+
+Actualización PROMPT 014: 014.36 registra nuevo ERROR de acceso SSH; 014.36–014.46 permanecen PENDIENTES de validación real. 014.47: registro parcial de límites en esta entrada, cierre final PENDIENTE. 014.48 y 014.49 PENDIENTES; cualquier commit de esta evidencia parcial no constituye cierre Raspberry. Se preservan las entradas históricas.
+
+COMANDOS SUGERIDOS NO EJECUTADOS: En Raspberry, tras resolver acceso y comprobar árbol/branch: git pull --ff-only; git log; sudo systemctl restart dashboard.service; systemctl status/is-active de los tres servicios; curl de /api/status, /api/devices y /api/ups; sqlite3 -readonly /home/pi/lorawan_queue/lorawan_queue.db "SELECT status, COUNT(*) FROM uplink_queue GROUP BY status;"; journalctl de dashboard, ttn-gateway y lorawan-queue; validación UI/capturas y git status final. No se ejecutó tag ni publicación de v1.0.0. No se probó corte de Internet, reinicio del equipo ni entrega final TTN.
+
+## TAREA 015.01 — BASELINE PC
+
+OBJETIVO:
+BASELINE PC.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+main limpio; commits d8b5f04 y a680f58 presentes.
+
+RESULTADO:
+main limpio; commits d8b5f04 y a680f58 presentes.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.02 — ORIGIN
+
+OBJETIVO:
+ORIGIN.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+fetch código 0; HEAD, origin/main y remoto coinciden en d8b5f04.
+
+RESULTADO:
+fetch código 0; HEAD, origin/main y remoto coinciden en d8b5f04.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.03 — SUITE PC
+
+OBJETIVO:
+SUITE PC.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+106 tests en 21.438s, OK; pruebas locales.
+
+RESULTADO:
+106 tests en 21.438s, OK; pruebas locales.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.04 — JAVASCRIPT
+
+OBJETIVO:
+JAVASCRIPT.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+node --check código 0.
+
+RESULTADO:
+node --check código 0.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.05 — GIT DIFF
+
+OBJETIVO:
+GIT DIFF.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Baseline limpio; diff vacío y diff --check correcto antes de registro.
+
+RESULTADO:
+Baseline limpio; diff vacío y diff --check correcto antes de registro.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.06 — CORE LORAWAN
+
+OBJETIVO:
+CORE LORAWAN.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin diff frente a 80ceba0; fast_queue/in_flight y ACK cubiertos por suite local.
+
+RESULTADO:
+Sin diff frente a 80ceba0; fast_queue/in_flight y ACK cubiertos por suite local.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.07 — SQLITE
+
+OBJETIVO:
+SQLITE.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Dashboard solo lectura; sin cambios de DB. ALTER TABLE históricos del proxy conservados; operación real PENDIENTE.
+
+RESULTADO:
+Dashboard solo lectura; sin cambios de DB. ALTER TABLE históricos del proxy conservados; operación real PENDIENTE.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.08 — UPS PC
+
+OBJETIVO:
+UPS PC.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Suite incluye 0xA2 CHARGING, signed16 y visual charging; hardware PENDIENTE.
+
+RESULTADO:
+Suite incluye 0xA2 CHARGING, signed16 y visual charging; hardware PENDIENTE.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.09 — PRE-PULL RASPBERRY
+
+OBJETIVO:
+PRE-PULL RASPBERRY.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Dos accesos SSH fallidos; no se conoce estado actual remoto.
+
+RESULTADO:
+Dos accesos SSH fallidos; no se conoce estado actual remoto.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.10 — DESPLIEGUE
+
+OBJETIVO:
+DESPLIEGUE.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Pull no ejecutado.
+
+RESULTADO:
+Pull no ejecutado.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.11 — COMMITS RASPBERRY
+
+OBJETIVO:
+COMMITS RASPBERRY.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Log remoto no obtenido.
+
+RESULTADO:
+Log remoto no obtenido.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.12 — REINICIO DASHBOARD
+
+OBJETIVO:
+REINICIO DASHBOARD.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No ejecutado.
+
+RESULTADO:
+No ejecutado.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.13 — SERVICIOS
+
+OBJETIVO:
+SERVICIOS.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin consulta real.
+
+RESULTADO:
+Sin consulta real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.14 — API STATUS
+
+OBJETIVO:
+API STATUS.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin respuesta real obtenida.
+
+RESULTADO:
+Sin respuesta real obtenida.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.15 — API DEVICES
+
+OBJETIVO:
+API DEVICES.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin respuesta real obtenida.
+
+RESULTADO:
+Sin respuesta real obtenida.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.16 — FLUJO UI
+
+OBJETIVO:
+FLUJO UI.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin validación ni capturas reales.
+
+RESULTADO:
+Sin validación ni capturas reales.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.17 — DISPOSITIVOS
+
+OBJETIVO:
+DISPOSITIVOS.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin observación actual; sessions vacío, sin asociaciones inventadas.
+
+RESULTADO:
+Sin observación actual; sessions vacío, sin asociaciones inventadas.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.18 — COLA
+
+OBJETIVO:
+COLA.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin conteos reales ni prueba operacional; DB preservada.
+
+RESULTADO:
+Sin conteos reales ni prueba operacional; DB preservada.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.19 — TTN
+
+OBJETIVO:
+TTN.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin evidencia actual; PUSH_ACK no acredita entrega final.
+
+RESULTADO:
+Sin evidencia actual; PUSH_ACK no acredita entrega final.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.20 — UPS REAL
+
+OBJETIVO:
+UPS REAL.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin consulta I2C/API real.
+
+RESULTADO:
+Sin consulta I2C/API real.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.21 — GPS
+
+OBJETIVO:
+GPS.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Hardware no bloqueante; evidencia comunicada por usuario, no medición nueva.
+
+RESULTADO:
+Hardware no bloqueante; evidencia comunicada por usuario, no medición nueva.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.22 — JOURNAL DASHBOARD
+
+OBJETIVO:
+JOURNAL DASHBOARD.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No consultado.
+
+RESULTADO:
+No consultado.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.23 — JOURNAL LORAWAN
+
+OBJETIVO:
+JOURNAL LORAWAN.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No consultado.
+
+RESULTADO:
+No consultado.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.24 — GIT RASPBERRY
+
+OBJETIVO:
+GIT RASPBERRY.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Sin status remoto.
+
+RESULTADO:
+Sin status remoto.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.25 — BITACORA
+
+OBJETIVO:
+BITACORA.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Registro parcial PC y límites; cierre completo PENDIENTE.
+
+RESULTADO:
+Registro parcial PC y límites; cierre completo PENDIENTE.
+
+ESTADO:
+CONFIRMADO
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.26 — CIERRE PROMPT 014
+
+OBJETIVO:
+CIERRE PROMPT 014.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Actualización de límites registrada; no cerrar tareas sin evidencia remota.
+
+RESULTADO:
+Actualización de límites registrada; no cerrar tareas sin evidencia remota.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.27 — COMMIT DOCUMENTAL FINAL
+
+OBJETIVO:
+COMMIT DOCUMENTAL FINAL.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+Cierre final condicionado a Raspberry; commit parcial de esta intervención se informa por herramienta.
+
+RESULTADO:
+Cierre final condicionado a Raspberry; commit parcial de esta intervención se informa por herramienta.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.28 — VERSION ESTABLE
+
+OBJETIVO:
+VERSION ESTABLE.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No crear v1.0.0 sin validación crítica Raspberry.
+
+RESULTADO:
+No crear v1.0.0 sin validación crítica Raspberry.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.29 — SINCRONIZACION RASPBERRY
+
+OBJETIVO:
+SINCRONIZACION RASPBERRY.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No ejecutada.
+
+RESULTADO:
+No ejecutada.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.30 — SERVICIOS FINALES
+
+OBJETIVO:
+SERVICIOS FINALES.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+No consultados.
+
+RESULTADO:
+No consultados.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
+
+
+## TAREA 015.31 — CIERRE REPOSITORIO
+
+OBJETIVO:
+CIERRE REPOSITORIO.
+
+ACCIÓN:
+Revisión y ejecución según registro de comandos anterior; pasos remotos no ejecutados.
+
+EVIDENCIA:
+PC validado; no declarar versión estable operacional.
+
+RESULTADO:
+PC validado; no declarar versión estable operacional.
+
+ESTADO:
+PENDIENTE
+
+ARCHIVOS AFECTADOS:
+Solo BITACORA.md como registro.
+
+OBSERVACIONES:
+Alcance PC separado de operación real Raspberry; sin funcionalidades nuevas.
